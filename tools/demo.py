@@ -1,6 +1,8 @@
 import argparse
 import glob
+import re
 from pathlib import Path
+import os
 
 try:
     import open3d
@@ -19,7 +21,16 @@ from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
 
-
+def custom_sort_key(filepath):
+    # Extract file name from file path
+    filename = os.path.basename(filepath)
+    # Extract numeric part using regular expression
+    match = re.match(r'(\d+)_labeled\.bin', filename)
+    if match:
+        return int(match.group(1))
+    else:
+        return filename
+    
 class DemoDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.bin'):
         """
@@ -36,8 +47,7 @@ class DemoDataset(DatasetTemplate):
         self.root_path = root_path
         self.ext = ext
         data_file_list = glob.glob(str(root_path / f'*{self.ext}')) if self.root_path.is_dir() else [self.root_path]
-
-        data_file_list.sort()
+        data_file_list = sorted(data_file_list)
         self.sample_file_list = data_file_list
 
     def __len__(self):
@@ -75,7 +85,6 @@ def parse_config():
 
     return args, cfg
 
-
 def main():
     args, cfg = parse_config()
     logger = common_utils.create_logger()
@@ -94,9 +103,10 @@ def main():
         for idx, data_dict in enumerate(demo_dataset):
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = demo_dataset.collate_batch([data_dict])
+            #print(data_dict)
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
-
+            print(pred_dicts)
             V.draw_scenes(
                 points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
                 ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
