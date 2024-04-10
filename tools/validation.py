@@ -103,7 +103,7 @@ def main():
     validation_file_list = demo_dataset.validation_file_list
     validation_bboxes = [bbox.get_bounding_box(file) for file in validation_file_list]
     validation_bboxes = np.stack(validation_bboxes)
-    print(validation_bboxes)
+    # print(validation_bboxes)
     model = build_network(model_cfg=cfg.MODEL, num_class=len(cfg.CLASS_NAMES), dataset=demo_dataset)
     model.load_params_from_file(filename=args.ckpt, logger=logger, to_cpu=True)
     model.cuda()
@@ -128,15 +128,15 @@ def main():
             max = bbox.bbox3d_overlaps_diou(true_bbox, vehicle_bboxes)
             print(max)
             iou.append(max.item())
-            V.draw_scenes(
-                points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
-                ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-            )
+            # V.draw_scenes(
+            #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+            #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+            # )
 
             if not OPEN3D_FLAG:
                 mlab.show(stop=True)
-
-    print(iou)
+    validation_file_names = [s[-27:] for s in validation_file_list]
+    print(list(zip(validation_file_names, iou)))
     logger.info('Demo done.')
 
 
