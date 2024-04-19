@@ -3,6 +3,7 @@ import glob
 import re
 from pathlib import Path
 import get_bounding_boxes as bbox
+import validation_utils as utils
 import os
 
 try:
@@ -82,6 +83,8 @@ def parse_config():
                         help='specify the config for demo')
     parser.add_argument('--data_path', type=str, default='demo_data',
                         help='specify the point cloud data file or directory')
+    parser.add_argument('--result_path', type=str, default='evaluation_results.xlsx',
+                        help='specify the location for the saved results')
     parser.add_argument('--ckpt', type=str, default=None, help='specify the pretrained model')
     parser.add_argument('--ext', type=str, default='.bin', help='specify the extension of your point cloud data file')
 
@@ -111,6 +114,7 @@ def main():
     total = 0
     correct = 0
     iou = []
+    thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
     with torch.no_grad():
         for idx, data_dict in enumerate(demo_dataset):  
             total += 1
@@ -118,16 +122,20 @@ def main():
             #print(data_dict)
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
-            #print(pred_dicts)
+            print(pred_dicts)
             mask = pred_dicts[0]['pred_labels'] == 1
             vehicle_bboxes = pred_dicts[0]['pred_boxes'][mask]
-            #print(vehicle_bboxes)
-            true_bbox = validation_bboxes[idx]
-            true_bbox = np.tile(true_bbox, (vehicle_bboxes.shape[0],1))
-            true_bbox = torch.tensor(true_bbox, device ='cuda')
-            max = bbox.bbox3d_overlaps_diou(true_bbox, vehicle_bboxes)
-            print(max)
-            iou.append(max.item())
+            if(vehicle_bboxes.numel() == 0):
+                iou.append(0)
+            else:
+                true_bbox = validation_bboxes[idx]
+                true_bbox = np.tile(true_bbox, (vehicle_bboxes.shape[0],1))
+                true_bbox = torch.tensor(true_bbox, device ='cuda')
+                #print(vehicle_bboxes)
+                #print(true_bbox)
+                max = bbox.bbox3d_overlaps_diou(true_bbox, vehicle_bboxes)
+                #print(max)
+                iou.append(max.item())
             # V.draw_scenes(
             #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
             #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
@@ -137,6 +145,8 @@ def main():
                 mlab.show(stop=True)
     validation_file_names = [s[-27:] for s in validation_file_list]
     print(list(zip(validation_file_names, iou)))
+    for threshold in thresholds:
+        utils.create_or_modify_excel(args.result_path, args.data_path, threshold, args.ckpt, iou)
     logger.info('Demo done.')
 
 
