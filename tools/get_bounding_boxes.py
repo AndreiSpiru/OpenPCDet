@@ -60,11 +60,50 @@ def bbox3d_overlaps_diou(pred_boxes, gt_boxes):
     volume_inter = inter[:, 0] * inter[:, 1] * inter_h
     volume_union = volume_gt_boxes + volume_pred_boxes - volume_inter
 
-    print(volume_union)
-    print(volume_inter)
+    # print(volume_union)
+    # print(volume_inter)
     print(volume_inter / volume_union)
 
     return torch.max(volume_inter / volume_union)
+
+def bbox3d_best_iou_bbox(pred_boxes, gt_boxes):
+    """
+    https://github.com/agent-sgs/PillarNet/blob/master/det3d/core/utils/center_utils.py
+    Args:
+        pred_boxes (N, 7): 
+        gt_boxes (N, 7): 
+
+    Returns:
+        _type_: _description_
+    """
+    assert pred_boxes.shape[0] == gt_boxes.shape[0]
+
+    qcorners = center_to_corner2d(pred_boxes[:, :2], pred_boxes[:, 3:5])  # (N, 4, 2)
+    gcorners = center_to_corner2d(gt_boxes[:, :2], gt_boxes[:, 3:5])  # (N, 4, 2)   
+
+    inter_max_xy = torch.minimum(qcorners[:, 2], gcorners[:, 2])
+    inter_min_xy = torch.maximum(qcorners[:, 0], gcorners[:, 0])
+    out_max_xy = torch.maximum(qcorners[:, 2], gcorners[:, 2])
+    out_min_xy = torch.minimum(qcorners[:, 0], gcorners[:, 0])
+
+    # calculate area
+    volume_pred_boxes = pred_boxes[:, 3] * pred_boxes[:, 4] * pred_boxes[:, 5]
+    volume_gt_boxes = gt_boxes[:, 3] * gt_boxes[:, 4] * gt_boxes[:, 5]
+
+    inter_h = torch.minimum(pred_boxes[:, 2] + 0.5 * pred_boxes[:, 5], gt_boxes[:, 2] + 0.5 * gt_boxes[:, 5]) - \
+              torch.maximum(pred_boxes[:, 2] - 0.5 * pred_boxes[:, 5], gt_boxes[:, 2] - 0.5 * gt_boxes[:, 5])
+    inter_h = torch.clamp(inter_h, min=0)
+
+    inter = torch.clamp((inter_max_xy - inter_min_xy), min=0)
+    volume_inter = inter[:, 0] * inter[:, 1] * inter_h
+    volume_union = volume_gt_boxes + volume_pred_boxes - volume_inter
+
+    # print(volume_union)
+    # print(volume_inter)
+    print(volume_inter / volume_union)
+
+    return pred_boxes[torch.argmax(volume_inter / volume_union)]
+
 
 def get_bounding_box(file):
     pc_array = np.load(file)
