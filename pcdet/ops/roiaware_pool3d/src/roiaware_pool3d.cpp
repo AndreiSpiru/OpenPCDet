@@ -148,7 +148,6 @@ int points_in_boxes_cpu(at::Tensor boxes_tensor, at::Tensor pts_tensor, at::Tens
 //    CHECK_CONTIGUOUS(boxes_tensor);
 //    CHECK_CONTIGUOUS(pts_tensor);
 //    CHECK_CONTIGUOUS(pts_indices_tensor);
-
     int boxes_num = boxes_tensor.size(0);
     int pts_num = pts_tensor.size(0);
 

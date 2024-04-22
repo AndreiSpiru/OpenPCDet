@@ -100,7 +100,7 @@ def bbox3d_best_iou_bbox(pred_boxes, gt_boxes):
 
     # print(volume_union)
     # print(volume_inter)
-    print(volume_inter / volume_union)
+    #print(volume_inter / volume_union)
 
     return pred_boxes[torch.argmax(volume_inter / volume_union)]
 
@@ -125,7 +125,7 @@ def get_bounding_box(file):
     
     #pred_boxes = torch.tensor(converted_bbox, dtype=torch.float32)
     #gt_boxes = torch.tensor(test_box, dtype=torch.float32)
-    print(converted_bbox)
+    #print(converted_bbox)
     #bbox3d_overlaps_diou(pred_boxes, gt_boxes)
     # o3d.visualization.draw_geometries([pcd, aabb, obb])
     return converted_bbox

@@ -175,7 +175,7 @@ def detection_bboxes(args, cfg):
             #print(data_dict)
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
-            print(pred_dicts)
+            #print(pred_dicts)
             mask = pred_dicts[0]['pred_labels'] == 1
             vehicle_bboxes = pred_dicts[0]['pred_boxes'][mask]
             if(vehicle_bboxes.numel() == 0):
@@ -197,7 +197,7 @@ def detection_bboxes(args, cfg):
             if not OPEN3D_FLAG:
                 mlab.show(stop=True)
     validation_file_names = [s[-27:] for s in validation_file_list]
-    print(list(zip(validation_file_names, bboxes)))
+    #print(list(zip(validation_file_names, bboxes)))
     logger.info('Demo done.')
     return bboxes, demo_dataset.sample_file_list
 
