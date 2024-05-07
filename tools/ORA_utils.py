@@ -78,10 +78,14 @@ def pick_random_points_in_mask(point_masks, budget):
 
     return non_zero_indices[mask]
 
-def pick_highest_intensity_points_in_masl(points, point_masks, budget):
-    print(point_masks)
-    non_zero_indices = point_masks.squeeze().nonzero().squeeze()
+def pick_highest_intensity_points_in_mask(points, point_masks, budget):
     
+    non_zero_indices = point_masks.squeeze().nonzero().squeeze()
+
+    if non_zero_indices.numel() == 0:
+        # If there are no non-zero indices, return an empty tensor
+        return torch.tensor([], dtype=torch.long)
+
 
     # Apply the mask to the full array to get values from the specified column
     column_values = points[non_zero_indices][:, 3]
@@ -89,20 +93,53 @@ def pick_highest_intensity_points_in_masl(points, point_masks, budget):
     # Sort indices based on the values in the specified column
     sorted_indices = non_zero_indices[column_values.argsort()]
 
-    print(sorted_indices)
-
     # Select the first k shuffled indices
     k = min(budget, sorted_indices.numel())  # Choose the number of non-zero values to keep
     selected_indices = sorted_indices[:k]
 
-    # Create a mask to set non-selected indices to zero
-    mask = torch.zeros_like(non_zero_indices, dtype=torch.bool)
-    mask[selected_indices] = True
+    return selected_indices
 
-    # # Set non-selected non-zero values to zero
-    # point_masks[:, non_zero_indices[mask == False]] = 0
+def pick_lowest_distance_in_mask(points, point_masks, budget):
+    # Get the indices of non-zero values in the mask
+    non_zero_indices = point_masks.squeeze().nonzero().squeeze()
 
-    return non_zero_indices[mask]
+    if non_zero_indices.numel() == 0:
+        # If there are no non-zero indices, return an empty tensor
+        return torch.tensor([], dtype=torch.long)
+
+    # Extract x, y, z coordinates from points for non-zero indices
+    xyz_coordinates = points[non_zero_indices, :3]  # Assuming points has shape [N, 3] for x, y, z
+
+    # Calculate distances from each point to the origin (0, 0, 0)
+    distances = torch.norm(xyz_coordinates, dim=1)
+
+    # Sort non-zero indices based on distances
+    sorted_indices = non_zero_indices[distances.argsort()]
+
+    # Select the first 'budget' indices (up to 'k' indices if fewer non-zero indices than 'budget')
+    k = min(budget, sorted_indices.numel())
+    selected_indices = sorted_indices[:k]
+
+    return selected_indices
+
+def get_all_points_in_mask_distance(points, point_masks):
+    # Get the indices of non-zero values in the mask
+    non_zero_indices = point_masks.squeeze().nonzero().squeeze()
+
+    if non_zero_indices.numel() == 0:
+        # If there are no non-zero indices, return an empty tensor
+        return torch.tensor([], dtype=torch.long)
+
+    # Extract x, y, z coordinates from points for non-zero indices
+    xyz_coordinates = points[non_zero_indices, :3]  # Assuming points has shape [N, 3] for x, y, z
+
+    # Calculate distances from each point to the origin (0, 0, 0)
+    distances = torch.norm(xyz_coordinates, dim=1)
+
+    # Sort non-zero indices based on distances
+    sorted_indices = non_zero_indices[distances.argsort()]
+
+    return sorted_indices
 
 def shift_selected_points(points, selected_points, shifting_distance):
     # Iterate over each non-zero point in the mask and apply ray_shifting function
@@ -123,6 +160,26 @@ def apply_random_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distanc
     points, point_masks, is_numpy = get_point_mask_in_boxes3d(points, boxes3d)
 
     selected_points = pick_random_points_in_mask(point_masks, budget)
+
+    points = shift_selected_points(points, selected_points, shifting_distance)
+
+    return points.numpy() if is_numpy else points
+
+def apply_intensity_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance = 2):
+    
+    points, point_masks, is_numpy = get_point_mask_in_boxes3d(points, boxes3d)
+
+    selected_points = pick_highest_intensity_points_in_mask(points, point_masks, budget)
+
+    points = shift_selected_points(points, selected_points, shifting_distance)
+
+    return points.numpy() if is_numpy else points
+
+def apply_distance_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance = 2):
+    
+    points, point_masks, is_numpy = get_point_mask_in_boxes3d(points, boxes3d)
+
+    selected_points = pick_lowest_distance_in_mask(points, point_masks, budget)
 
     points = shift_selected_points(points, selected_points, shifting_distance)
 
