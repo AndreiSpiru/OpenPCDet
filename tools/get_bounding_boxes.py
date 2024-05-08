@@ -62,7 +62,7 @@ def bbox3d_overlaps_diou(pred_boxes, gt_boxes):
 
     # print(volume_union)
     # print(volume_inter)
-    print(volume_inter / volume_union)
+    #print(volume_inter / volume_union)
 
     return torch.max(volume_inter / volume_union)
 

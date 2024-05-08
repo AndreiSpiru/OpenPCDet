@@ -1,6 +1,8 @@
 from pcdet.ops.roiaware_pool3d import roiaware_pool3d_utils
 from pcdet.utils import common_utils
 import torch
+import numpy as np
+from copy import copy
 
 def cart2sph(x, y, z):
     # Transform Cartesian to spherical coordinates
@@ -143,17 +145,19 @@ def get_all_points_in_mask_distance(points, point_masks):
 
 def shift_selected_points(points, selected_points, shifting_distance):
     # Iterate over each non-zero point in the mask and apply ray_shifting function
+    modified_points = copy(points)
     for idx in selected_points:
         # Extract point coordinates and intensity
-        point = points[idx]
+        point = modified_points[idx]
         x, y, z, intensity = point[0], point[1], point[2], point[3]
 
         # Apply ray_shifting function to the point
         shifted_point = ray_shifting(torch.tensor([x, y, z, intensity]), shifting_distance)
 
         # Update the points tensor with the shifted point
-        points[idx] = shifted_point
-    return points
+        modified_points[idx] = shifted_point
+    
+    return modified_points
 
 def apply_random_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance = 2):
     

@@ -7,6 +7,7 @@ import pickle
 import validation
 import os
 import torch
+from copy import copy
 
 #python genetic_ORA.py --cfg_file cfgs/kitti_models/pointpillar.yaml    --budget 200 --ckpt pointpillar_7728.pth     --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
 
@@ -24,12 +25,13 @@ def create_variable_size_datasets(num_datasets, min_examples, max_examples, num_
 def load_attack_points_from_path(root_path, args, cfg):
     datasets = []
     attack_paths = []
+    original_points = []
     root_attack_path = root_path.replace("0-10", "0-10_genetic")
     for condition in os.listdir(root_path):
         condition_path = os.path.join(root_path, condition)
         condition_path_attack = os.path.join(root_attack_path, condition)
         if os.path.isdir(condition_path):
-            case_args = args
+            case_args = copy(args)
             case_args.data_path = condition_path
             bboxes, source_file_list = validation.detection_bboxes(case_args, cfg)
             #print(bboxes)
@@ -37,6 +39,7 @@ def load_attack_points_from_path(root_path, args, cfg):
                 #if TMP_ok == False:
                     file_npy = file_bin[: -3] + "npy"
                     initial_points = np.load(file_npy)
+    
                     bbox = torch.unsqueeze(bboxes[idx], 0)
                     bbox = bbox.cpu().numpy()  
 
@@ -51,11 +54,12 @@ def load_attack_points_from_path(root_path, args, cfg):
                     attack_path = os.path.join(condition_path_attack, base_file_npy)
                     
 
+                    original_points.append(points.numpy())
                     datasets.append(points_in_bbox)
                     attack_paths.append(attack_path)
     
-    # print(datasets)
-    return datasets, attack_paths
+    print(attack_paths)
+    return datasets, original_points, attack_paths
 
 def black_box_loss(selected_data):
     return np.sum(selected_data[:, 3]),
@@ -82,18 +86,27 @@ def crossover(ind1, ind2):
     ind2[:] = child2
     return ind1, ind2
 
-def evaluate(individual, datasets, max_length):
-    scores = []
-    count_valid = 0
-    for data in datasets:
-        scaled_indices = [int(idx * len(data) / max_length) for idx in individual if idx * len(data) / max_length < len(data)]
-        if scaled_indices:
-            selected_data = data[scaled_indices]
-            score = black_box_loss(selected_data)[0]
-            count_valid += len(scaled_indices)
-            scores.append(score)
-    return (np.sum(scores) / count_valid,) if count_valid > 0 else (float('inf'),)
 
+def evaluate(individual, datasets, original_points, attack_paths, max_length, args, cfg):
+    # Save attacked files in their respective directories
+    for idx, (data, initial_points, attack_path) in enumerate(zip(datasets, original_points, attack_paths)):
+        scaled_indices = [int(idx * len(data) / max_length) for idx in individual if idx * len(data) / max_length < len(data)]  
+        points = utils.shift_selected_points(initial_points, scaled_indices, 2)
+        os.makedirs(os.path.dirname(attack_path), exist_ok=True)
+        attack_path_bin = attack_path[:-3] + "bin"
+        print(f"Attempting to write to {attack_path_bin}")
+        try:
+            points.astype(np.float32).tofile(attack_path_bin)
+            print(f"Processed {attack_path_bin}")
+        except Exception as e:
+            print(f"Failed to write to {attack_path_bin}: {e}")
+    
+    scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
+    print(f"All scores {scores}")
+    print(f"Mean score:{np.mean(scores)}")
+    return np.mean(scores)
+
+    
 def main():
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMin)
@@ -102,15 +115,16 @@ def main():
 
     args, cfg = validation.parse_config()
     root_path = args.data_path
-
-    datasets, attack_paths = load_attack_points_from_path(root_path, args, cfg)
+    print(root_path)
+    datasets, original_points, attack_paths = load_attack_points_from_path(root_path, args, cfg)
     #datasets = create_variable_size_datasets(200, 50, 150, 4)
     
     max_length = max(len(dataset) for dataset in datasets)
 
     toolbox.register("individual", create_unique_individual, max_length=max_length, budget = args.budget)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", evaluate, datasets=datasets, max_length=max_length)
+    toolbox.register("evaluate", evaluate, datasets=datasets, original_points=original_points, 
+                     attack_paths=attack_paths, max_length=max_length, args=args, cfg=cfg)
     toolbox.register("mate", crossover)
     toolbox.register("mutate", mutate, max_length=max_length, indpb=0.2)
     toolbox.register("select", tools.selTournament, tournsize=3)
@@ -125,13 +139,22 @@ def main():
     fold_count = 0
     for train_index, test_index in kf.split(datasets):
         print(f"Fold {fold_count} started")
-        train_sets = [datasets[i] for i in train_index]
-        test_sets = [datasets[i] for i in test_index]
+        train_datasets = [datasets[i] for i in train_index]
+        test_datasets = [datasets[i] for i in test_index]
+
+        train_points = [original_points[i] for i in train_index]
+        test_points = [original_points[i] for i in test_index]
+
+        train_paths = [attack_paths[i] for i in train_index]
+        test_paths = [attack_paths[i] for i in test_index]
 
         fold_count += 1
-        
+        print(train_index)
+        print(test_index)
         # Re-register the 'evaluate' function with current training datasets
-        toolbox.register("evaluate", evaluate, datasets=train_sets, max_length=max_length)
+        toolbox.register("evaluate", evaluate, datasets=train_datasets, original_points=train_points, 
+                     attack_paths=train_paths, max_length=max_length, args=args, cfg=cfg)
+        
         
         for gen in range(40):
             offspring = algorithms.varAnd(population, toolbox, cxpb=0.5, mutpb=0.2)
@@ -140,11 +163,11 @@ def main():
             for fit, ind in zip(fits, offspring):
                 ind.fitness.values = fit
             population = toolbox.select(offspring, len(population))
-            if gen % 10 == 0:
-                print(f"Gen {gen} done")
+            print(f"Gen {gen} done")
         
         # Re-register for evaluation on test sets
-        toolbox.register("evaluate", evaluate, datasets=test_sets, max_length=max_length)
+        toolbox.register("evaluate", evaluate, datasets=test_datasets, original_points=test_points, 
+                     attack_paths=test_paths, max_length=max_length, args=args, cfg=cfg)
         best_ind = tools.selBest(population, 1)[0]
         test_fitness = toolbox.evaluate(best_ind)
         results.append(test_fitness)
