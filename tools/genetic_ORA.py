@@ -46,19 +46,23 @@ def load_attack_points_from_path(root_path, args, cfg):
                     points, points_in_bbox, _ = utils.get_point_mask_in_boxes3d(initial_points, bbox)
                     non_zero_indices = points_in_bbox.squeeze().nonzero().squeeze()
                     points_in_bbox = points[non_zero_indices].numpy()
+                    
+                    sorted_indices = np.argsort(points_in_bbox[:, 3])
 
-                    # sorted_indices = np.argsort(points_in_bbox[:, 3])
+                    # print(f"inainte {non_zero_indices}")
+                    # print(f"nou {non_zero_indices[sorted_indices]}")
                     # points_in_bbox = points_in_bbox[sorted_indices]
+                    #print(points_in_bbox[sorted_indices])
 
                     base_file_npy = os.path.basename(file_npy)
                     attack_path = os.path.join(condition_path_attack, base_file_npy)
                     
 
                     original_points.append(points.numpy())
-                    datasets.append(points_in_bbox)
+                    datasets.append(non_zero_indices[sorted_indices].numpy())
                     attack_paths.append(attack_path)
     
-    print(attack_paths)
+    #print(datasets)
     return datasets, original_points, attack_paths
 
 def black_box_loss(selected_data):
@@ -71,11 +75,14 @@ def create_unique_individual(max_length, budget):
 def mutate(individual, max_length, indpb=0.05):
     for i in range(len(individual)):
         if random.random() < indpb:
-            new_index = random.randint(0, max_length - 1)
-            while new_index in individual:
+            original_value = individual[i]
+            while True:
                 new_index = random.randint(0, max_length - 1)
-            individual[i] = new_index
+                if new_index != original_value:
+                    individual[i] = new_index
+                    break
     return individual,
+
 
 def crossover(ind1, ind2):
     # This function performs a one-point crossover at a random position along the list of attributes.
@@ -91,20 +98,25 @@ def evaluate(individual, datasets, original_points, attack_paths, max_length, ar
     # Save attacked files in their respective directories
     for idx, (data, initial_points, attack_path) in enumerate(zip(datasets, original_points, attack_paths)):
         scaled_indices = [int(idx * len(data) / max_length) for idx in individual if idx * len(data) / max_length < len(data)]  
-        points = utils.shift_selected_points(initial_points, scaled_indices, 2)
+        points = utils.shift_selected_points(initial_points, data[scaled_indices], 2)
+        # differing_rows = 0
+        # for row1, row2 in zip(points, initial_points):
+        #     if not np.array_equal(row1, row2):
+        #         differing_rows += 1
+
+        # print(differing_rows)
         os.makedirs(os.path.dirname(attack_path), exist_ok=True)
         attack_path_bin = attack_path[:-3] + "bin"
-        print(f"Attempting to write to {attack_path_bin}")
         try:
             points.astype(np.float32).tofile(attack_path_bin)
-            print(f"Processed {attack_path_bin}")
         except Exception as e:
             print(f"Failed to write to {attack_path_bin}: {e}")
     
+    
     scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
-    print(f"All scores {scores}")
+    #print(f"All scores {scores}")
     print(f"Mean score:{np.mean(scores)}")
-    return np.mean(scores)
+    return (np.mean(scores),)
 
     
 def main():
@@ -130,10 +142,10 @@ def main():
     toolbox.register("select", tools.selTournament, tournsize=3)
 
     # Initialize the population once
-    population = toolbox.population(n=50)
+    population = toolbox.population(n=30)
 
     # Running Genetic Algorithm with Cross-validation
-    kf = KFold(n_splits=10)
+    kf = KFold(n_splits=3)
     results = []
 
     fold_count = 0
@@ -156,7 +168,7 @@ def main():
                      attack_paths=train_paths, max_length=max_length, args=args, cfg=cfg)
         
         
-        for gen in range(40):
+        for gen in range(30):
             offspring = algorithms.varAnd(population, toolbox, cxpb=0.5, mutpb=0.2)
             # Correctly apply the evaluate function over the offspring
             fits = list(map(toolbox.evaluate, offspring))  # Use list to consume the map object if needed
