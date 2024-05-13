@@ -192,7 +192,7 @@ def detection_iou(args, cfg):
     return iou, validation_file_list
 
 def detection_iou_custom_dataset(args, cfg, attack_file_paths):
-    logging.disable(logging.CRITICAL)
+    logging.disable(logging.INFO)
     logger = common_utils.create_logger()
     #logger.info('-----------------Quick Demo of OpenPCDet-------------------------')
     demo_dataset = CustomDataset(

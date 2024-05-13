@@ -7,9 +7,13 @@ import pickle
 import validation
 import os
 import torch
+import matplotlib.pyplot as plt
+import logging
 from copy import copy
 
 #python genetic_ORA.py --cfg_file cfgs/kitti_models/pointpillar.yaml    --budget 200 --ckpt pointpillar_7728.pth     --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
+
+logging.basicConfig(filename='ga_log.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Function to generate datasets with variable number of rows
 def create_variable_size_datasets(num_datasets, min_examples, max_examples, num_features):
@@ -59,7 +63,7 @@ def load_attack_points_from_path(root_path, args, cfg):
                     
 
                     original_points.append(points.numpy())
-                    datasets.append(non_zero_indices[sorted_indices].numpy())
+                    datasets.append(non_zero_indices.numpy())
                     attack_paths.append(attack_path)
     
     #print(datasets)
@@ -73,15 +77,20 @@ def create_unique_individual(max_length, budget):
     return creator.Individual(random.sample(range(max_length), budget))
 
 def mutate(individual, max_length, indpb=0.05):
+    """ Enhanced mutation function that avoids repeating values already in the individual. """
     for i in range(len(individual)):
         if random.random() < indpb:
             original_value = individual[i]
-            while True:
-                new_index = random.randint(0, max_length - 1)
-                if new_index != original_value:
-                    individual[i] = new_index
+            new_value = random.randint(0, max_length - 1)
+            attempts = 0  # Added to avoid infinite loops
+            while new_value in individual:
+                new_value = random.randint(0, max_length - 1)
+                attempts += 1
+                if attempts > 20:  # Give up after 20 attempts to avoid infinite loop
                     break
-    return individual,
+            if new_value != original_value:
+                individual[i] = new_value
+    return (individual,)  # Ensure we return a tuple containing the individual
 
 
 def crossover(ind1, ind2):
@@ -94,17 +103,23 @@ def crossover(ind1, ind2):
     return ind1, ind2
 
 
+def scale_indices(individual, data_length, max_length):
+    scale_factor = data_length / max_length
+    scaled_indices = set()
+    for idx in individual:
+        proposed_index = int(idx * scale_factor)
+        while (proposed_index in scaled_indices) and len(scaled_indices) < data_length:
+            proposed_index = (proposed_index + 1) % data_length  # Wrap around if necessary
+        scaled_indices.add(proposed_index)
+    return list(scaled_indices)
+
+
 def evaluate(individual, datasets, original_points, attack_paths, max_length, args, cfg):
     # Save attacked files in their respective directories
     for idx, (data, initial_points, attack_path) in enumerate(zip(datasets, original_points, attack_paths)):
-        scaled_indices = [int(idx * len(data) / max_length) for idx in individual if idx * len(data) / max_length < len(data)]  
+        scaled_indices = scale_indices(individual, len(data), max_length)
         points = utils.shift_selected_points(initial_points, data[scaled_indices], 2)
-        # differing_rows = 0
-        # for row1, row2 in zip(points, initial_points):
-        #     if not np.array_equal(row1, row2):
-        #         differing_rows += 1
-
-        # print(differing_rows)
+    
         os.makedirs(os.path.dirname(attack_path), exist_ok=True)
         attack_path_bin = attack_path[:-3] + "bin"
         try:
@@ -115,6 +130,7 @@ def evaluate(individual, datasets, original_points, attack_paths, max_length, ar
     
     scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
     #print(f"All scores {scores}")
+    logging.critical(f"Mean score:{np.mean(scores)}")
     print(f"Mean score:{np.mean(scores)}")
     return (np.mean(scores),)
 
@@ -142,15 +158,23 @@ def main():
     toolbox.register("select", tools.selTournament, tournsize=3)
 
     # Initialize the population once
-    population = toolbox.population(n=30)
+    population = toolbox.population(n=50)
 
     # Running Genetic Algorithm with Cross-validation
     kf = KFold(n_splits=3)
     results = []
-
+    logging.info("Starting genetic algorithm")
     fold_count = 0
+
+     # Initialize lists for plotting
+    best_scores = []
+    mean_scores = []
+    worst_scores = []
+
     for train_index, test_index in kf.split(datasets):
         print(f"Fold {fold_count} started")
+        logging.critical(f"Fold {fold_count} started"
+                     )
         train_datasets = [datasets[i] for i in train_index]
         test_datasets = [datasets[i] for i in test_index]
 
@@ -168,14 +192,24 @@ def main():
                      attack_paths=train_paths, max_length=max_length, args=args, cfg=cfg)
         
         
-        for gen in range(30):
+        for gen in range(50):
+            logging.critical(f"Generation {gen} started")
             offspring = algorithms.varAnd(population, toolbox, cxpb=0.5, mutpb=0.2)
             # Correctly apply the evaluate function over the offspring
             fits = list(map(toolbox.evaluate, offspring))  # Use list to consume the map object if needed
+            fitnesses = []
             for fit, ind in zip(fits, offspring):
                 ind.fitness.values = fit
+                fitnesses.append(fit)
+
+            best_scores.append(min(fitnesses))
+            mean_scores.append(np.mean(fitnesses))
+            worst_scores.append(max(fitnesses))
+
             population = toolbox.select(offspring, len(population))
+
             print(f"Gen {gen} done")
+            logging.critical(f"Generation {gen} completed with best fitness {best_scores[-1]}")
         
         # Re-register for evaluation on test sets
         toolbox.register("evaluate", evaluate, datasets=test_datasets, original_points=test_points, 
@@ -186,11 +220,26 @@ def main():
         print(f"Fold {fold_count} done")
         print("------------------------")
 
+    # Plotting the results
+    plt.figure(figsize=(10, 5))
+    plt.plot(best_scores, label='Best Fitness')
+    plt.plot(mean_scores, label='Mean Fitness')
+    plt.plot(worst_scores, label='Worst Fitness')
+    plt.xlabel('Generation')
+    plt.ylabel('Fitness')
+    plt.title('Fitness over Generations')
+    plt.legend()
+    plt.savefig('fitness_over_generations.png')
+    plt.close()
+
+    logging.critical(f"Cross-validation results:{results}")
+    logging.critical(f"Best Individual{best_ind}")
     print("Cross-validation results:", results)
     print("Best Individual", best_ind)
     # Save the best individual from the last fold
     with open('best_individual.pkl', 'wb') as f:
         pickle.dump(best_ind, f)
+    logging.info("Saved best individual")
 
 if __name__ == "__main__":
     main()
