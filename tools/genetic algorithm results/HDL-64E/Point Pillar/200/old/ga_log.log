@@ -7805,31 +7805,3 @@
 2024-05-13 12:19:18,175 - CRITICAL - Mean score:0.2942141074729561
 2024-05-13 12:19:18,175 - CRITICAL - Generation 49 completed with best fitness (0.2942141074729561,)
 2024-05-13 12:19:21,312 - CRITICAL - Mean score:0.31513536173968587
-2024-05-13 17:14:25,709 - INFO - Starting genetic algorithm
-2024-05-13 17:14:25,709 - CRITICAL - Fold 0 started
-2024-05-13 17:14:25,710 - CRITICAL - Generation 0 started
-2024-05-13 17:17:44,745 - INFO - Starting genetic algorithm
-2024-05-13 17:17:44,745 - CRITICAL - Fold 0 started
-2024-05-13 17:17:44,745 - CRITICAL - Generation 0 started
-2024-05-13 17:19:19,166 - INFO - Starting genetic algorithm
-2024-05-13 17:19:19,167 - CRITICAL - Fold 0 started
-2024-05-13 17:19:19,167 - CRITICAL - Generation 0 started
-2024-05-13 17:19:57,833 - INFO - Starting genetic algorithm
-2024-05-13 17:19:57,833 - CRITICAL - Fold 0 started
-2024-05-13 17:19:57,834 - CRITICAL - Generation 0 started
-2024-05-13 17:20:21,600 - INFO - Starting genetic algorithm
-2024-05-13 17:20:21,600 - CRITICAL - Fold 0 started
-2024-05-13 17:20:21,601 - CRITICAL - Generation 0 started
-2024-05-13 17:21:22,415 - INFO - Starting genetic algorithm
-2024-05-13 17:21:22,415 - CRITICAL - Fold 0 started
-2024-05-13 17:21:22,415 - CRITICAL - Generation 0 started
-2024-05-13 17:23:04,961 - INFO - Starting genetic algorithm
-2024-05-13 17:23:04,961 - CRITICAL - Fold 0 started
-2024-05-13 17:23:04,961 - CRITICAL - Generation 0 started
-2024-05-13 17:23:41,100 - INFO - Starting genetic algorithm
-2024-05-13 17:23:41,101 - CRITICAL - Fold 0 started
-2024-05-13 17:23:41,101 - CRITICAL - Generation 0 started
-2024-05-13 17:23:47,154 - CRITICAL - Mean score:0.29127586781298986
-2024-05-13 17:23:53,207 - CRITICAL - Mean score:0.2836614234588958
-2024-05-13 17:23:59,280 - CRITICAL - Mean score:0.2961106710209258
-2024-05-13 17:24:05,399 - CRITICAL - Mean score:0.2913630516204691

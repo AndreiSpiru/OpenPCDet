@@ -13,7 +13,7 @@ from copy import copy
 
 #python genetic_ORA.py --cfg_file cfgs/kitti_models/pointpillar.yaml    --budget 200 --ckpt pointpillar_7728.pth     --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
 
-logging.basicConfig(filename='ga_log.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='ga_log.log1', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Function to generate datasets with variable number of rows
 def create_variable_size_datasets(num_datasets, min_examples, max_examples, num_features):
@@ -63,7 +63,7 @@ def load_attack_points_from_path(root_path, args, cfg):
                     
 
                     original_points.append(points.numpy())
-                    datasets.append(non_zero_indices[sorted_indices].numpy())
+                    datasets.append(non_zero_indices.numpy())
                     attack_paths.append(attack_path)
     
     #print(datasets)
@@ -74,7 +74,7 @@ def black_box_loss(selected_data):
 
 def create_unique_individual(max_length, budget):
     budget = min(max_length, budget)
-    return creator.Individual(list(range(budget)))
+    return creator.Individual(random.sample(range(max_length), budget))
 
 def mutate(individual, max_length, indpb=0.05):
     """ Enhanced mutation function that avoids repeating values already in the individual. """
@@ -229,7 +229,7 @@ def main():
     plt.ylabel('Fitness')
     plt.title('Fitness over Generations')
     plt.legend()
-    plt.savefig('fitness_over_generations.png')
+    plt.savefig('fitness_over_generations1.png')
     plt.close()
 
     logging.critical(f"Cross-validation results:{results}")
@@ -237,7 +237,7 @@ def main():
     print("Cross-validation results:", results)
     print("Best Individual", best_ind)
     # Save the best individual from the last fold
-    with open('best_individual.pkl', 'wb') as f:
+    with open('best_individual1.pkl', 'wb') as f:
         pickle.dump(best_ind, f)
     logging.info("Saved best individual")
 
