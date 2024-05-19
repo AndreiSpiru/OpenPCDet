@@ -6,8 +6,10 @@ import validation
 import torch
 import ORA_utils as utils
 import os
+import psutil
 from copy import copy
 import logging
+from joblib import Parallel, delayed
 
 logging.basicConfig(filename='bayesian_log1.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -17,6 +19,8 @@ def black_box_function(indices, data, initial_points, attack_path, args, cfg):
 
     points = utils.shift_selected_points(initial_points, selected_points, 2)
 
+    # process = psutil.Process(os.getpid())
+    # attack_path = attack_path[:-4] + str(process.cpu_num()) + ".npy"
     attack_path_bin = attack_path[:-3] + "bin"
     logging.critical(f"Attack path: {attack_path}")
     try:
@@ -27,18 +31,6 @@ def black_box_function(indices, data, initial_points, attack_path, args, cfg):
     scores, _ = validation.detection_iou_custom_dataset(args, cfg, [attack_path])
     logging.critical(f"Scores: {scores}")
     return scores[0]
-
-# Acquisition function to guide the Bayesian Optimization
-def acquisition_function(x, model, data, n_select):
-    x = np.clip(np.round(x).astype(int), 0, len(data) - 1)
-    x = np.unique(x)  # Ensure indices are unique
-    if len(x) < n_select:
-        return 1e6  # Penalize for insufficient indices
-    x = x[:n_select]  # Ensure we use only `n_select` indices
-    x = x.reshape(-1, 1)
-    mu, sigma = model.predict(x, return_std=True)
-    logging.debug(f"Acquisition function evaluated at {x}: mu={mu}, sigma={sigma}")
-    return -(mu - 1.96 * sigma).sum()  # Minimize the negative sum of LCB
 
 def load_attack_points_from_path(args, cfg):
     datasets = []
@@ -101,22 +93,28 @@ def bayesian_optimisation_case(args, cfg, data, initial_points, attack_path):
     result = gp_minimize(
         wrapped_objective,      # The objective function
         search_space,           # The search space
-        n_calls=200,             # Number of evaluations of `wrapped_objective`
+        n_calls=100,            # Number of evaluations of `wrapped_objective`
         random_state=42,        # Random state for reproducibility
-        acq_func='EI'           # Acquisition function, 'Expected Improvement'
+        acq_func='EI',           # Acquisition function, 'Expected Improvement'
+        n_jobs=1               # Parallelize the evaluations
     )
 
     # Print the best result
     best_indices = list(set(int(i) for i in result.x if i < data.shape[0]))
     print("Best subset of rows indices:", best_indices)
     print("Minimum value of the black-box function:", result.fun)
-    return result.fun
+    return result.fun, best_indices
 
 if __name__ == '__main__':
     args, cfg = validation.parse_config()
     dataset, initial_points, attack_paths = load_attack_points_from_path(args, cfg)
-    results = bayesian_optimisation_case(args, cfg, dataset[1], initial_points[1], attack_paths[1])
+    #results = bayesian_optimisation_case(args, cfg, dataset[1], initial_points[1], attack_paths[1])
+    results, best_indices = Parallel(n_jobs=2)(delayed(bayesian_optimisation_case)(args, cfg, data, initial_point, attack_path) 
+                                 for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths))
+    logging.critical(f"Best Indices: {best_indices}")
     logging.critical(f"Final Result: {results}")
     logging.critical(f"Mean: {np.mean(results)}")
     print(results)
     print(np.mean(results))
+    np.save("bayesian_HDL_results",results)
+    np.save("bayesian_HDL_indices",best_indices)

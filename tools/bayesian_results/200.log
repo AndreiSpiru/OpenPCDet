@@ -208,3 +208,195 @@
 2024-05-19 15:11:33,105 - CRITICAL - Scores: [0.45390538072102304]
 2024-05-19 15:11:46,987 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
 2024-05-19 15:11:47,068 - CRITICAL - Scores: [0.4689977687307727]
+2024-05-19 15:12:00,696 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:12:00,776 - CRITICAL - Scores: [0.4581776384540635]
+2024-05-19 15:12:14,936 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:12:15,020 - CRITICAL - Scores: [0.4612525524210647]
+2024-05-19 15:13:23,037 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:13:23,123 - CRITICAL - Scores: [0.4628515455948998]
+2024-05-19 15:13:43,569 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:13:43,654 - CRITICAL - Scores: [0.45305111696728273]
+2024-05-19 15:13:54,992 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:13:55,068 - CRITICAL - Scores: [0.4508638670809367]
+2024-05-19 15:14:03,680 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:14:03,757 - CRITICAL - Scores: [0.4614864280218616]
+2024-05-19 15:14:15,955 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:14:16,036 - CRITICAL - Scores: [0.4578398309567093]
+2024-05-19 15:14:38,429 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:14:38,512 - CRITICAL - Scores: [0.46801407303161724]
+2024-05-19 15:14:49,923 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:14:49,998 - CRITICAL - Scores: [0.457502660662439]
+2024-05-19 15:15:06,746 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:15:06,826 - CRITICAL - Scores: [0.46297651224985376]
+2024-05-19 15:15:24,491 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:15:24,579 - CRITICAL - Scores: [0.47319217819585097]
+2024-05-19 15:15:58,182 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:15:58,266 - CRITICAL - Scores: [0.44712751941691764]
+2024-05-19 15:16:21,425 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:16:21,509 - CRITICAL - Scores: [0.45994017215852095]
+2024-05-19 15:16:35,770 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:16:35,848 - CRITICAL - Scores: [0.4614956965688124]
+2024-05-19 15:16:50,474 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:16:50,553 - CRITICAL - Scores: [0.479229787661275]
+2024-05-19 15:17:13,194 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:17:13,279 - CRITICAL - Scores: [0.46439112958087037]
+2024-05-19 15:17:46,287 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:17:46,372 - CRITICAL - Scores: [0.47726057295813873]
+2024-05-19 15:18:09,842 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:18:09,924 - CRITICAL - Scores: [0.4626376144581125]
+2024-05-19 15:18:14,222 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:18:14,300 - CRITICAL - Scores: [0.4623714764841192]
+2024-05-19 15:18:32,646 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:18:32,730 - CRITICAL - Scores: [0.46691284715021675]
+2024-05-19 15:19:07,667 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:19:07,763 - CRITICAL - Scores: [0.45100436179288456]
+2024-05-19 15:19:31,792 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:19:31,877 - CRITICAL - Scores: [0.4396474536864489]
+2024-05-19 15:20:10,357 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:20:10,437 - CRITICAL - Scores: [0.4887342272251453]
+2024-05-19 15:20:30,915 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:20:30,995 - CRITICAL - Scores: [0.46133322171640034]
+2024-05-19 15:20:54,998 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:20:55,082 - CRITICAL - Scores: [0.4502611923861281]
+2024-05-19 15:21:27,433 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:21:27,521 - CRITICAL - Scores: [0.4524856886341841]
+2024-05-19 15:22:02,269 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:22:02,359 - CRITICAL - Scores: [0.4745258211460825]
+2024-05-19 15:22:49,023 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:22:49,109 - CRITICAL - Scores: [0.4616164880598271]
+2024-05-19 15:22:55,765 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:22:55,853 - CRITICAL - Scores: [0.43850222260292154]
+2024-05-19 15:23:27,412 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:23:27,496 - CRITICAL - Scores: [0.4562371431443812]
+2024-05-19 15:24:37,145 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:24:37,227 - CRITICAL - Scores: [0.4600774953641817]
+2024-05-19 15:25:04,191 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:25:04,277 - CRITICAL - Scores: [0.4521914063673166]
+2024-05-19 15:25:42,033 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:25:42,118 - CRITICAL - Scores: [0.45927397167573875]
+2024-05-19 15:27:48,026 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:27:48,136 - CRITICAL - Scores: [0.47430363680473125]
+2024-05-19 15:28:32,474 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:28:32,566 - CRITICAL - Scores: [0.4708819994015739]
+2024-05-19 15:29:19,717 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:29:19,799 - CRITICAL - Scores: [0.49261334787966365]
+2024-05-19 15:29:50,521 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:29:50,603 - CRITICAL - Scores: [0.4818146951577318]
+2024-05-19 15:30:18,315 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:30:18,401 - CRITICAL - Scores: [0.4847612347100145]
+2024-05-19 15:30:34,791 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:30:34,870 - CRITICAL - Scores: [0.46948561205228084]
+2024-05-19 15:30:54,719 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:30:54,804 - CRITICAL - Scores: [0.46463884190967647]
+2024-05-19 15:31:20,062 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:31:20,173 - CRITICAL - Scores: [0.4552166361269642]
+2024-05-19 15:32:29,549 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:32:29,640 - CRITICAL - Scores: [0.45409963504040735]
+2024-05-19 15:33:27,411 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:33:27,498 - CRITICAL - Scores: [0.4696127444500338]
+2024-05-19 15:35:28,420 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:35:28,508 - CRITICAL - Scores: [0.4539422391942929]
+2024-05-19 15:37:03,611 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:37:03,696 - CRITICAL - Scores: [0.47852150464690574]
+2024-05-19 15:37:39,934 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:37:40,018 - CRITICAL - Scores: [0.45383872438473827]
+2024-05-19 15:39:13,281 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:39:13,366 - CRITICAL - Scores: [0.49254446435037774]
+2024-05-19 15:39:55,653 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:39:55,737 - CRITICAL - Scores: [0.47129291912155546]
+2024-05-19 15:42:31,840 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:42:31,922 - CRITICAL - Scores: [0.472703282854551]
+2024-05-19 15:44:22,943 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:44:23,023 - CRITICAL - Scores: [0.47060448783933395]
+2024-05-19 15:45:37,368 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:45:37,449 - CRITICAL - Scores: [0.47456256401764313]
+2024-05-19 15:46:35,475 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:46:35,553 - CRITICAL - Scores: [0.4773704967312883]
+2024-05-19 15:46:42,300 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:46:42,373 - CRITICAL - Scores: [0.45298950061461746]
+2024-05-19 15:47:31,124 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:47:31,207 - CRITICAL - Scores: [0.49395068364020617]
+2024-05-19 15:48:51,704 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:48:51,782 - CRITICAL - Scores: [0.4481458098850761]
+2024-05-19 15:49:58,767 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:49:58,845 - CRITICAL - Scores: [0.4463977352594025]
+2024-05-19 15:51:07,536 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:51:07,617 - CRITICAL - Scores: [0.48298436483633644]
+2024-05-19 15:51:27,695 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:51:27,774 - CRITICAL - Scores: [0.4505573713411864]
+2024-05-19 15:52:54,164 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:52:54,243 - CRITICAL - Scores: [0.4744214047712741]
+2024-05-19 15:53:26,159 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:53:26,238 - CRITICAL - Scores: [0.4658001537121036]
+2024-05-19 15:55:08,586 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:55:08,664 - CRITICAL - Scores: [0.4598495777246695]
+2024-05-19 15:56:15,621 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:56:15,704 - CRITICAL - Scores: [0.5051077029925998]
+2024-05-19 15:58:03,454 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 15:58:03,535 - CRITICAL - Scores: [0.48142118697283676]
+2024-05-19 16:00:32,384 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:00:32,463 - CRITICAL - Scores: [0.4583127109092835]
+2024-05-19 16:01:28,392 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:01:28,475 - CRITICAL - Scores: [0.48674736017478293]
+2024-05-19 16:02:41,480 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:02:41,562 - CRITICAL - Scores: [0.4610435325573052]
+2024-05-19 16:04:25,292 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:04:25,375 - CRITICAL - Scores: [0.4622323464550117]
+2024-05-19 16:06:06,429 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:06:06,510 - CRITICAL - Scores: [0.4791051373592378]
+2024-05-19 16:08:43,121 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:08:43,200 - CRITICAL - Scores: [0.4600799197953265]
+2024-05-19 16:10:24,068 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:10:24,148 - CRITICAL - Scores: [0.4905358894826656]
+2024-05-19 16:12:27,185 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:12:27,264 - CRITICAL - Scores: [0.44393806521609774]
+2024-05-19 16:12:32,818 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:12:32,890 - CRITICAL - Scores: [0.46176255804606753]
+2024-05-19 16:13:36,729 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:13:36,817 - CRITICAL - Scores: [0.46189293717847335]
+2024-05-19 16:13:42,246 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:13:42,321 - CRITICAL - Scores: [0.45927976590109726]
+2024-05-19 16:15:38,096 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:15:38,176 - CRITICAL - Scores: [0.4540142407207561]
+2024-05-19 16:15:43,866 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:15:43,939 - CRITICAL - Scores: [0.4570677212095351]
+2024-05-19 16:17:18,705 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:17:18,799 - CRITICAL - Scores: [0.47104230259540497]
+2024-05-19 16:18:36,839 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:18:36,918 - CRITICAL - Scores: [0.456862969953402]
+2024-05-19 16:20:30,877 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:20:30,956 - CRITICAL - Scores: [0.48721664737969594]
+2024-05-19 16:21:50,944 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:21:51,023 - CRITICAL - Scores: [0.45575281531353173]
+2024-05-19 16:23:59,991 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:24:00,077 - CRITICAL - Scores: [0.45233178208830127]
+2024-05-19 16:25:35,229 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:25:35,307 - CRITICAL - Scores: [0.4521765701511609]
+2024-05-19 16:27:39,055 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:27:39,133 - CRITICAL - Scores: [0.46596151308593203]
+2024-05-19 16:29:25,757 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:29:25,835 - CRITICAL - Scores: [0.4388290754568156]
+2024-05-19 16:32:23,350 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:32:23,428 - CRITICAL - Scores: [0.4604433082817984]
+2024-05-19 16:34:11,141 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:34:11,219 - CRITICAL - Scores: [0.4809192087548689]
+2024-05-19 16:34:57,175 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:34:57,254 - CRITICAL - Scores: [0.45102138583291396]
+2024-05-19 16:35:51,006 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:35:51,086 - CRITICAL - Scores: [0.45515642012181873]
+2024-05-19 16:36:31,033 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:36:31,112 - CRITICAL - Scores: [0.4279443474973219]
+2024-05-19 16:38:35,097 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:38:35,176 - CRITICAL - Scores: [0.4478780110940687]
+2024-05-19 16:39:27,725 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:39:27,804 - CRITICAL - Scores: [0.44323547189782153]
+2024-05-19 16:40:13,477 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:40:13,555 - CRITICAL - Scores: [0.4682773379194891]
+2024-05-19 16:41:56,017 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:41:56,096 - CRITICAL - Scores: [0.4767210521905672]
+2024-05-19 16:42:34,251 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:42:34,329 - CRITICAL - Scores: [0.47349370963877774]
+2024-05-19 16:43:40,065 - CRITICAL - Attack path: /home/andrei/mavs_code/output_data_converted/0-10_bayesian/HDL-64E/moderate/11_labeled.npy
+2024-05-19 16:43:40,144 - CRITICAL - Scores: [0.4638195709872148]
+2024-05-19 16:44:18,639 - CRITICAL - Final Result: 0.4279443474973219
+2024-05-19 16:44:18,639 - CRITICAL - Mean: 0.4279443474973219
