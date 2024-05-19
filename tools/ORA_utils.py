@@ -179,7 +179,7 @@ def apply_intensity_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_dist
 
     return points.numpy() if is_numpy else points
 
-def apply_distance_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance = 2):
+def apply_distance_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance = -2):
     
     points, point_masks, is_numpy = get_point_mask_in_boxes3d(points, boxes3d)
 

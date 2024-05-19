@@ -1,7 +1,7 @@
 import numpy as np
-from scipy.optimize import minimize
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern
+from skopt import gp_minimize
+from skopt.space import Integer
+from skopt.utils import use_named_args
 import validation
 import torch
 import ORA_utils as utils
@@ -9,12 +9,10 @@ import os
 from copy import copy
 import logging
 
-logging.basicConfig(filename='bayesian_log.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='bayesian_log1.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Simulated black-box function: Sum of selected points' intensities
 def black_box_function(indices, data, initial_points, attack_path, args, cfg):
-    indices = np.clip(np.round(indices).astype(int), 0, len(data) - 1)
-    indices = np.unique(indices)  # Ensure indices are unique
     selected_points = data[indices]
 
     points = utils.shift_selected_points(initial_points, selected_points, 2)
@@ -77,68 +75,47 @@ def load_attack_points_from_path(args, cfg):
 
     return datasets, original_points, attack_paths
 
-def delete_file(file_path):
-    try:
-        os.remove(file_path)
-        logging.critical(f"File '{file_path}' deleted successfully.")
-    except FileNotFoundError:
-        logging.error(f"File '{file_path}' not found.")
-    except PermissionError:
-        logging.error(f"Permission denied to delete file '{file_path}'.")
-
 def bayesian_optimisation_case(args, cfg, data, initial_points, attack_path):
-    length_scale_bounds = (1e-2, 1e7)  # Further increase the upper bound
-
-    kernel = Matern(length_scale=1.0, length_scale_bounds=length_scale_bounds)
-    gp = GaussianProcessRegressor(kernel=kernel, alpha=1e-4, n_restarts_optimizer=10)
-
+    
     budget = min(args.budget, len(data))
     k = budget  # Number of indices to select (assuming budget represents this)
-    initial_indices = np.random.choice(len(data), k, replace=False).reshape(-1, 1)
+    # Create a named search space
+    search_space = [Integer(0, data.shape[0] - 1, name=f'index_{i}') for i in range(k)]
     
-    # Evaluate the black-box function for the initial set of indices
-    initial_eval = black_box_function(initial_indices.flatten(), data, initial_points, attack_path, args, cfg)
-    logging.critical(f"Initial Evaluation: {initial_eval}")
-    
-    # Reshape initial_evals to match the dimension required by `fit`
-    initial_evals = np.full((initial_indices.shape[0],), initial_eval)
-    
-    # Fit the GP on the indices with their corresponding evaluations
-    gp.fit(initial_indices, initial_evals)
+    # Create a closure for the black-box function with additional arguments
+    def make_objective(data, initial_points, attack_path, args, cfg):
+        def objective(indices):
+            # Convert indices to integers and remove duplicates
+            indices = list(set(int(i) for i in indices if i < data.shape[0]))
+            return black_box_function(indices, data, initial_points, attack_path, args, cfg)
+        return objective
 
-    # Define bounds for optimization
-    bounds = [(0, len(data) - 1) for _ in range(k)]
+    objective_with_args = make_objective(data, initial_points, attack_path, args, cfg)
 
-    # Perform the optimization
-    def wrapped_acquisition(x):
-        result = acquisition_function(x, gp, data, k)
-        logging.critical(f"Evaluating acquisition function at {x}: {result}")
-        return result
-    
-    result = minimize(
-        wrapped_acquisition,
-        x0=initial_indices.flatten(),
-        bounds=bounds,
-        method='L-BFGS-B'
+    @use_named_args(search_space)
+    def wrapped_objective(**kwargs):
+        indices = [v for k, v in sorted(kwargs.items())]
+        return objective_with_args(indices)
+        
+    # Perform Bayesian Optimization
+    result = gp_minimize(
+        wrapped_objective,      # The objective function
+        search_space,           # The search space
+        n_calls=200,             # Number of evaluations of `wrapped_objective`
+        random_state=42,        # Random state for reproducibility
+        acq_func='EI'           # Acquisition function, 'Expected Improvement'
     )
 
-    logging.critical(f"Optimization Result for {attack_path}: {result}")
-    if result.success:
-        optimized_indices = np.clip(np.round(result.x).astype(int), 0, len(data) - 1)
-        optimized_indices = np.unique(optimized_indices)[:k]  # Ensure we use exactly `k` unique indices
-        optimized_eval = black_box_function(optimized_indices, data, initial_points, attack_path, args, cfg)
-        logging.critical(f"Optimized Indices: {optimized_indices}")
-        logging.critical(f"Optimized Evaluation: {optimized_eval}")
-        logging.critical(f"Optimal Length Scale: {gp.kernel_.length_scale}")
-        return optimized_eval
-    else:
-        logging.critical(f"Optimization failed: {result.message}")
-        return 1e6
+    # Print the best result
+    best_indices = list(set(int(i) for i in result.x if i < data.shape[0]))
+    print("Best subset of rows indices:", best_indices)
+    print("Minimum value of the black-box function:", result.fun)
+    return result.fun
 
 if __name__ == '__main__':
     args, cfg = validation.parse_config()
     dataset, initial_points, attack_paths = load_attack_points_from_path(args, cfg)
-    results = bayesian_optimisation_case(args, cfg, dataset[0], initial_points[0], attack_paths[0])
+    results = bayesian_optimisation_case(args, cfg, dataset[1], initial_points[1], attack_paths[1])
     logging.critical(f"Final Result: {results}")
     logging.critical(f"Mean: {np.mean(results)}")
     print(results)
