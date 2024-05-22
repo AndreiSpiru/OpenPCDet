@@ -6,12 +6,11 @@ import numpy as np
 from pcdet.ops.roiaware_pool3d import roiaware_pool3d_utils
 from pcdet.utils import common_utils
 import torch
+from copy import copy
 
 #python random_ORA.py --cfg_file cfgs/kitti_models/pointpillar.yaml    --budget 200 --ckpt pointpillar_7728.pth     --data_path ~/mavs_code/output_data_converted/0-10/
 
-
-if __name__ == '__main__':
-    args, cfg = validation.parse_config()
+def random_ORA(args, cfg):
     root_path = args.data_path
     root_path_attack = os.path.dirname(root_path.rstrip("/"))
     root_path_attack = os.path.join(root_path_attack, "0-10_attacked_random")
@@ -24,7 +23,7 @@ if __name__ == '__main__':
                 condition_path = os.path.join(sensor_path, condition)
                 condition_path_attack = os.path.join(sensor_path_attack, condition)
                 if os.path.isdir(condition_path):
-                    case_args = args
+                    case_args = copy(args)
                     case_args.data_path = condition_path
                     bboxes, source_file_list = validation.detection_bboxes(case_args, cfg)
                     #print(bboxes)
@@ -54,3 +53,6 @@ if __name__ == '__main__':
                             attack_path_bin = os.path.join(condition_path_attack, base_file_bin)
                             updated_points.astype(np.float32).tofile(attack_path_bin)
                             TMP_ok = True
+if __name__ == '__main__':
+    args, cfg = validation.parse_config()
+    random_ORA(args, cfg)

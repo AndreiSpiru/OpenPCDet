@@ -49,9 +49,9 @@ def load_attack_points_from_path(root_path, args, cfg):
 
                     points, points_in_bbox, _ = utils.get_point_mask_in_boxes3d(initial_points, bbox)
                     non_zero_indices = points_in_bbox.squeeze().nonzero().squeeze()
-                    points_in_bbox = points[non_zero_indices].numpy()
+                    # points_in_bbox = points[non_zero_indices].numpy()
                     
-                    sorted_indices = np.argsort(points_in_bbox[:, 3])
+                    # sorted_indices = np.argsort(points_in_bbox[:, 3])
 
                     # print(f"inainte {non_zero_indices}")
                     # print(f"nou {non_zero_indices[sorted_indices]}")
@@ -63,7 +63,7 @@ def load_attack_points_from_path(root_path, args, cfg):
                     
 
                     original_points.append(points.numpy())
-                    datasets.append(non_zero_indices[sorted_indices].numpy())
+                    datasets.append(non_zero_indices.numpy())
                     attack_paths.append(attack_path)
     
     #print(datasets)
@@ -74,7 +74,7 @@ def black_box_loss(selected_data):
 
 def create_unique_individual(max_length, budget):
     budget = min(max_length, budget)
-    return creator.Individual(list(range(budget)))
+    return creator.Individual(random.sample(range(max_length), budget))
 
 def mutate(individual, max_length, indpb=0.05):
     """ Enhanced mutation function that avoids repeating values already in the individual. """
@@ -103,21 +103,11 @@ def crossover(ind1, ind2):
     return ind1, ind2
 
 
-def scale_indices(individual, data_length, max_length):
-    scale_factor = data_length / max_length
-    scaled_indices = set()
-    for idx in individual:
-        proposed_index = int(idx * scale_factor)
-        while (proposed_index in scaled_indices) and len(scaled_indices) < data_length:
-            proposed_index = (proposed_index + 1) % data_length  # Wrap around if necessary
-        scaled_indices.add(proposed_index)
-    return list(scaled_indices)
-
 
 def evaluate(individual, datasets, original_points, attack_paths, max_length, args, cfg):
     # Save attacked files in their respective directories
     for idx, (data, initial_points, attack_path) in enumerate(zip(datasets, original_points, attack_paths)):
-        scaled_indices = scale_indices(individual, len(data), max_length)
+        scaled_indices = utils.scale_indices(individual, len(data), max_length)
         points = utils.shift_selected_points(initial_points, data[scaled_indices], 2)
     
         os.makedirs(os.path.dirname(attack_path), exist_ok=True)
@@ -148,7 +138,7 @@ def main():
     #datasets = create_variable_size_datasets(200, 50, 150, 4)
     
     max_length = max(len(dataset) for dataset in datasets)
-
+    print(max_length)
     toolbox.register("individual", create_unique_individual, max_length=max_length, budget = args.budget)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate, datasets=datasets, original_points=original_points, 

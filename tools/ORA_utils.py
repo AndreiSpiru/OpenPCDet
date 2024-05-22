@@ -64,6 +64,13 @@ def pick_random_points_in_mask(point_masks, budget):
    # Get the indices of non-zero values
     non_zero_indices = point_masks.squeeze().nonzero().squeeze()
 
+    if non_zero_indices.numel() == 0:
+        # If there are no non-zero indices, return an empty tensor
+        return torch.tensor([], dtype=torch.long)
+    
+    if non_zero_indices.numel() == 1:
+        non_zero_indices = torch.tensor([non_zero_indices.item()])
+    
     # Shuffle the indices
     shuffled_indices = torch.randperm(non_zero_indices.numel())
 
@@ -88,7 +95,8 @@ def pick_highest_intensity_points_in_mask(points, point_masks, budget):
         # If there are no non-zero indices, return an empty tensor
         return torch.tensor([], dtype=torch.long)
 
-
+    if non_zero_indices.numel() == 1:
+        non_zero_indices = torch.tensor([non_zero_indices.item()])
     # Apply the mask to the full array to get values from the specified column
     column_values = points[non_zero_indices][:, 3]
 
@@ -108,6 +116,9 @@ def pick_lowest_distance_in_mask(points, point_masks, budget):
     if non_zero_indices.numel() == 0:
         # If there are no non-zero indices, return an empty tensor
         return torch.tensor([], dtype=torch.long)
+    
+    if non_zero_indices.numel() == 1:
+        non_zero_indices = torch.tensor([non_zero_indices.item()])
 
     # Extract x, y, z coordinates from points for non-zero indices
     xyz_coordinates = points[non_zero_indices, :3]  # Assuming points has shape [N, 3] for x, y, z
@@ -159,6 +170,16 @@ def shift_selected_points(points, selected_points, shifting_distance):
     
     return modified_points
 
+def scale_indices(individual, data_length, max_length):
+    scale_factor = data_length / max_length
+    scaled_indices = set()
+    for idx in individual:
+        proposed_index = int(idx * scale_factor)
+        while (proposed_index in scaled_indices) and len(scaled_indices) < data_length:
+            proposed_index = (proposed_index + 1) % data_length  # Wrap around if necessary
+        scaled_indices.add(proposed_index)
+    return list(scaled_indices)
+
 def apply_random_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance = 2):
     
     points, point_masks, is_numpy = get_point_mask_in_boxes3d(points, boxes3d)
@@ -186,5 +207,17 @@ def apply_distance_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_dista
     selected_points = pick_lowest_distance_in_mask(points, point_masks, budget)
 
     points = shift_selected_points(points, selected_points, shifting_distance)
+
+    return points.numpy() if is_numpy else points
+
+def apply_ORA_pre_selected_points(points, selected_points, boxes3d, max_length, shifting_distance = -2):
+
+    points, points_in_bbox, is_numpy = get_point_mask_in_boxes3d(points, boxes3d)
+    
+    non_zero_indices = points_in_bbox.squeeze().nonzero().squeeze().numpy()
+
+    selected_points = scale_indices(selected_points, len(non_zero_indices), max_length)
+
+    points = shift_selected_points(points, non_zero_indices[selected_points], shifting_distance)
 
     return points.numpy() if is_numpy else points

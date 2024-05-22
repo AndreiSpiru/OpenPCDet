@@ -191,6 +191,60 @@ def detection_iou(args, cfg):
     #logger.info('Demo done.')
     return iou, validation_file_list
 
+def detection_confidence(args, cfg):
+    logging.disable(logging.CRITICAL)
+    logger = common_utils.create_logger()
+    #logger.info('-----------------Quick Demo of OpenPCDet-------------------------')
+    demo_dataset = DemoDataset(
+        dataset_cfg=cfg.DATA_CONFIG, class_names=cfg.CLASS_NAMES, training=False,
+        root_path=Path(args.data_path), ext=args.ext, logger=logger
+    )
+    #logger.info(f'Total number of samples: \t{len(demo_dataset)}')
+    validation_file_list = demo_dataset.validation_file_list
+    validation_bboxes = [bbox.get_bounding_box(file) for file in validation_file_list]
+    validation_bboxes = np.stack(validation_bboxes)
+    # print(validation_bboxes)
+    model = build_network(model_cfg=cfg.MODEL, num_class=len(cfg.CLASS_NAMES), dataset=demo_dataset)
+    model.load_params_from_file(filename=args.ckpt, logger=logger, to_cpu=True)
+    model.cuda()
+    model.eval()
+    total = 0
+    correct = 0
+    confidences = []
+    with torch.no_grad():
+        for idx, data_dict in enumerate(demo_dataset):  
+            total += 1
+            data_dict = demo_dataset.collate_batch([data_dict])
+            #print(data_dict)
+            load_data_to_gpu(data_dict)
+            pred_dicts, _ = model.forward(data_dict)
+            #print(pred_dicts)
+            mask = pred_dicts[0]['pred_labels'] == 1
+            vehicle_bboxes = pred_dicts[0]['pred_boxes'][mask]
+            if(vehicle_bboxes.numel() == 0):
+                confidences.append(0)
+            else:
+                true_bbox = validation_bboxes[idx]
+                true_bbox = np.tile(true_bbox, (vehicle_bboxes.shape[0],1))
+                true_bbox = torch.tensor(true_bbox, device ='cuda')
+                #print(vehicle_bboxes)
+                #print(true_bbox)
+                maximum_index = bbox.bbox3d_overlaps_diou_index(true_bbox, vehicle_bboxes)
+                #print(max)
+                best_confidence = pred_dicts[0]['pred_scores'][maximum_index]
+                confidences.append(best_confidence.item())
+            # V.draw_scenes(
+            #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+            #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+            # )
+
+            if not OPEN3D_FLAG:
+                mlab.show(stop=True)
+    validation_file_names = [s[-27:] for s in validation_file_list]
+    #print(list(zip(validation_file_names, iou)))
+    #logger.info('Demo done.')
+    return confidences, validation_file_list
+
 def detection_iou_custom_dataset(args, cfg, attack_file_paths):
     logging.disable(logging.INFO)
     logger = common_utils.create_logger()
@@ -245,6 +299,7 @@ def detection_iou_custom_dataset(args, cfg, attack_file_paths):
     return iou, validation_file_list
 
 def detection_bboxes(args, cfg):
+    
     logger = common_utils.create_logger()
     logger.info('-----------------Quick Demo of OpenPCDet-------------------------')
     demo_dataset = DemoDataset(

@@ -10,6 +10,7 @@ import psutil
 from copy import copy
 import logging
 from joblib import Parallel, delayed
+import pickle
 
 logging.basicConfig(filename='bayesian_log1.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -109,12 +110,16 @@ if __name__ == '__main__':
     args, cfg = validation.parse_config()
     dataset, initial_points, attack_paths = load_attack_points_from_path(args, cfg)
     #results = bayesian_optimisation_case(args, cfg, dataset[1], initial_points[1], attack_paths[1])
-    results, best_indices = Parallel(n_jobs=2)(delayed(bayesian_optimisation_case)(args, cfg, data, initial_point, attack_path) 
+    parallel_results = Parallel(n_jobs=2)(delayed(bayesian_optimisation_case)(args, cfg, data, initial_point, attack_path) 
                                  for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths))
+    results, best_indices = zip(*parallel_results)
+    best_indices_list = list(best_indices)
     logging.critical(f"Best Indices: {best_indices}")
     logging.critical(f"Final Result: {results}")
     logging.critical(f"Mean: {np.mean(results)}")
     print(results)
     print(np.mean(results))
     np.save("bayesian_HDL_results",results)
-    np.save("bayesian_HDL_indices",best_indices)
+    # Save best_indices using pickle
+    with open("bayesian_HDL_indices.pkl", "wb") as f:
+        pickle.dump(best_indices_list, f)
