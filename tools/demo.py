@@ -103,7 +103,6 @@ def main():
         for idx, data_dict in enumerate(demo_dataset):
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = demo_dataset.collate_batch([data_dict])
-            #print(data_dict)
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
             print(demo_dataset.sample_file_list[idx])
