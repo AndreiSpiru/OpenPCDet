@@ -36,8 +36,9 @@ def main():
                     if os.path.isdir(condition_path):
                         case_args.data_path = condition_path
 
+                        attack_paths = utils.get_scenarios_in_distance_interval(condition_path, 0, 20)
                         # Calculate IOU and get the validation file list
-                        iou, _ = validation.detection_iou(case_args, cfg)
+                        iou, _ = validation.detection_iou_custom_dataset(case_args, cfg, attack_paths)
 
                         for threshold in thresholds:
                             # Create or modify the Excel file with the evaluation results

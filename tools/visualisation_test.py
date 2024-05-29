@@ -136,6 +136,41 @@ def roi_filter(points, roi_min=(0, -35, -35), roi_max=(35, 35, 35)):
     roi_pcd.points = o3d.utility.Vector3dVector(roi_points)
     return roi_pcd
 
+def augment_dimensions(bounding_box, is_flipped):
+    if not is_flipped: 
+        if  bounding_box[3] < 4 and bounding_box[4] < bounding_box[3]:
+            bounding_box[0] += (4 - bounding_box[3]) / 2
+            bounding_box[3] = 4
+        elif bounding_box[3] < 1.6 and bounding_box[4] > bounding_box[3] :
+            bounding_box[0] += (1.6 - bounding_box[3]) / 2
+            bounding_box[3] = 1.6
+    
+    elif is_flipped:
+        if bounding_box[4] < 4 and bounding_box[3] < bounding_box[4]:
+            bounding_box[0] += (4 - bounding_box[4]) / 2
+            bounding_box[4] = 4
+        if bounding_box[4] < 1.6 and bounding_box[3] > bounding_box[4] :
+            bounding_box[0] += (1.6 - bounding_box[4]) / 2
+            bounding_box[4] = 1.6
+    
+    # print(-1 * bounding_box[2] + bounding_box[5] / 2)
+    # if (-1 * bounding_box[2] + bounding_box[5] / 2) > 2.6:
+    difference = -1 * bounding_box[2] + bounding_box[5] / 2 - 2.2
+    print(difference)
+    bounding_box[2] += difference / 2
+    bounding_box[5] -= difference
+    # elif (-1 * bounding_box[2] + bounding_box[5] / 2) < 2.6:
+    #     difference = -1 * bounding_box[2] + bounding_box[5] / 2 - 2.6
+    #     print(difference)
+    #     bounding_box[2] -= difference / 2
+    #     bounding_box[5] += difference
+    
+    print(bounding_box)
+    print(is_flipped)
+    return bounding_box
+
+
+
 def obb_to_bounding_box_format(roi_pcd):
     """
     Convert Oriented Bounding Box (OBB) to bounding box format.
@@ -144,7 +179,8 @@ def obb_to_bounding_box_format(roi_pcd):
         roi_pcd (o3d.geometry.PointCloud): Point cloud data within ROI.
         
     Returns:
-        ndarray: Bounding box parameters [center, extents, heading].
+        tuple: Bounding box parameters [center, extents, heading], 
+               and boolean indicating if extents are flipped.
     """
     obb = roi_pcd.get_oriented_bounding_box()
     center = obb.center
@@ -155,10 +191,59 @@ def obb_to_bounding_box_format(roi_pcd):
     heading_vector = rotation_matrix[:, 0]  # First column
     heading = np.arctan2(heading_vector[1], heading_vector[0])
     
-    # Normalize heading to the range [0, 2π)
-    heading = normalize_heading(heading)
+    if heading < 0:
+        heading += 2 * np.pi
+
+    # Identify the correspondence of extents to global axes
+    local_axes = rotation_matrix.T  # Transpose to get local to global
+    abs_axes = np.abs(local_axes)
+    
+    # Determine the primary direction of each local axis
+    major_directions = np.argmax(abs_axes, axis=1)
+    
+    # Check if the first and second extents are flipped
+    is_flipped = (major_directions[0] == 1 and major_directions[1] == 0)
     
     bounding_box = np.concatenate([center, extents, [heading]])
+    bounding_box = augment_dimensions(bounding_box, is_flipped)
+    
+    return bounding_box
+
+def obb_to_bounding_box_format1(roi_pcd):
+    """
+    Convert Oriented Bounding Box (OBB) to bounding box format.
+    
+    Args:
+        roi_pcd (o3d.geometry.PointCloud): Point cloud data within ROI.
+        
+    Returns:
+        tuple: Bounding box parameters [center, extents, heading], 
+               and boolean indicating if extents are flipped.
+    """
+    obb = roi_pcd.get_oriented_bounding_box()
+    center = obb.center
+    extents = obb.extent
+    rotation_matrix = obb.R
+    
+    # Extract the heading from the rotation matrix
+    heading_vector = rotation_matrix[:, 0]  # First column
+    heading = np.arctan2(heading_vector[1], heading_vector[0])
+    
+    if heading < 0:
+        heading += 2 * np.pi
+
+    # Identify the correspondence of extents to global axes
+    local_axes = rotation_matrix.T  # Transpose to get local to global
+    abs_axes = np.abs(local_axes)
+    
+    # Determine the primary direction of each local axis
+    major_directions = np.argmax(abs_axes, axis=1)
+    
+    # Check if the first and second extents are flipped
+    is_flipped = (major_directions[0] == 1 and major_directions[1] == 0)
+    
+    bounding_box = np.concatenate([center, extents, [heading]])
+    
     return bounding_box
 
 def get_obb(file):
@@ -176,6 +261,22 @@ def get_obb(file):
     vehicle_points = vehicle_points[:, :-1]
     points = roi_filter(vehicle_points)
     return obb_to_bounding_box_format(points)
+
+def get_obb1(file):
+    """
+    Get Oriented Bounding Box (OBB) for a given file.
+    
+    Args:
+        file (str): Path to the point cloud file.
+        
+    Returns:
+        ndarray: Bounding box parameters [center, extents, heading].
+    """
+    pc_array = np.load(file)
+    vehicle_points = pc_array[pc_array[:, 3] == 6.0]
+    vehicle_points = vehicle_points[:, :-1]
+    points = roi_filter(vehicle_points)
+    return obb_to_bounding_box_format1(points)
 
 def _bboxes_to_corners2d(center, dim):
     """
@@ -224,6 +325,9 @@ def bbox3d_overlaps_iou(pred_boxes, gt_boxes):
     volume_inter = inter[:, 0] * inter[:, 1] * inter_h
     volume_union = volume_gt_boxes + volume_pred_boxes - volume_inter
     ious = volume_inter / volume_union
+
+    print(volume_inter)
+    print(volume_union)
     ious = torch.clamp(ious, min=0, max=1.0)
     return torch.max(ious)
 
@@ -248,8 +352,8 @@ def detection_bboxes(args, cfg):
     logger.info(f'Total number of samples: \t{len(demo_dataset)}')
     
     validation_file_list = demo_dataset.validation_file_list
-    validation_bboxes = [bbox.get_bounding_box(file) for file in validation_file_list]
-    validation_bboxes = np.stack(validation_bboxes)
+    
+    validation_bboxes = [get_obb1(file) for file in validation_file_list]
     validation_bboxes1 = [get_obb(file) for file in validation_file_list]
     
     model = build_network(model_cfg=cfg.MODEL, num_class=len(cfg.CLASS_NAMES), dataset=demo_dataset)
@@ -270,16 +374,30 @@ def detection_bboxes(args, cfg):
             if vehicle_bboxes.numel() == 0:
                 iou.append(0)
             else:
+                print(pred_dicts[0]['pred_boxes'][0])
+                true_bbox = validation_bboxes[idx]
+                print(true_bbox)
+                true_bbox = np.tile(true_bbox, (vehicle_bboxes.shape[0], 1))
+                true_bbox = torch.tensor(true_bbox, device='cuda')
+
                 true_bbox1 = validation_bboxes1[idx]
+                print(true_bbox1)
                 true_bbox1 = np.tile(true_bbox1, (vehicle_bboxes.shape[0], 1))
                 true_bbox1 = torch.tensor(true_bbox1, device='cuda')
                 
-                max_iou = bbox3d_overlaps_iou(true_bbox1, vehicle_bboxes)
-                max_iou = max_iou.cpu()
-                iou.append(max_iou.item())
+                max_iou = bbox3d_overlaps_iou(true_bbox, vehicle_bboxes)
+                max_iou1 = bbox3d_overlaps_iou(true_bbox1, vehicle_bboxes)
+                print(max_iou)
+                print(max_iou1)
+                max_iou1 = max_iou1.cpu()
+                iou.append(max_iou1.item())
                 
                 V.draw_scenes(
                     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+                    ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+                )
+                V.draw_scenes(
+                    points=data_dict['points'][:, 1:], ref_boxes=true_bbox,
                     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
                 )
                 V.draw_scenes(
@@ -291,6 +409,7 @@ def detection_bboxes(args, cfg):
                 mlab.show(stop=True)
     
     logger.info('Demo done.')
+    print(iou)
     return iou
 
 def flatten(lst):

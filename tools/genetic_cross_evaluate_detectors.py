@@ -36,7 +36,8 @@ def main():
     on different object detectors.
     """
     args, cfg = validation.parse_config()  # Parse configuration and arguments
-    saved_indices = "genetic_algorithm_results/HDL-64E/PointPillar/200/best_individual.pkl"
+    # saved_indices = "genetic_algorithm_results/HDL-64E/PointPillar/200/best_individual.pkl"
+    saved_indices = "best_individual.pkl"
     
     # Load the pre-selected indices from a pickle file
     with open(saved_indices, 'rb') as f:

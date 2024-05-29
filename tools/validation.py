@@ -231,6 +231,61 @@ def detection_confidence(args, cfg):
     
     return confidences, validation_file_list
 
+def detection_confidence_custom_dataset(args, cfg, attack_file_paths):
+    """
+    Perform detection and compute IoU for a custom dataset.
+    
+    Args:
+        args: Command line arguments.
+        cfg: Configuration object.
+        attack_file_paths: List of paths to attacked point cloud data.
+    
+    Returns:
+        iou: List of IoU values.
+        validation_file_list: List of validation file paths.
+    """
+    logging.disable(logging.INFO)
+    logger = common_utils.create_logger()
+    demo_dataset = CustomDataset(
+        dataset_cfg=cfg.DATA_CONFIG, class_names=cfg.CLASS_NAMES, attack_paths=attack_file_paths, training=False,
+        root_path=Path(args.data_path), ext=args.ext, logger=logger
+    )
+    
+    validation_file_list = demo_dataset.validation_file_list
+    validation_bboxes = [bbox.get_bounding_box(file) for file in validation_file_list]
+    validation_bboxes = np.stack(validation_bboxes)
+    
+    model = build_network(model_cfg=cfg.MODEL, num_class=len(cfg.CLASS_NAMES), dataset=demo_dataset)
+    model.load_params_from_file(filename=args.ckpt, logger=logger, to_cpu=True)
+    model.cuda()
+    model.eval()
+    
+    confidences = []
+    with torch.no_grad():
+        for idx, data_dict in enumerate(demo_dataset):
+            data_dict = demo_dataset.collate_batch([data_dict])
+            load_data_to_gpu(data_dict)
+            pred_dicts, _ = model.forward(data_dict)
+            
+            mask = pred_dicts[0]['pred_labels'] == 1
+            vehicle_bboxes = pred_dicts[0]['pred_boxes'][mask]
+            
+            if vehicle_bboxes.numel() == 0:
+                confidences.append(0)
+            else:
+                true_bbox = validation_bboxes[idx]
+                true_bbox = np.tile(true_bbox, (vehicle_bboxes.shape[0], 1))
+                true_bbox = torch.tensor(true_bbox, device='cuda')
+                
+                max_idx = bbox.bbox3d_overlaps_diou_index(true_bbox, vehicle_bboxes)
+                best_confidence = pred_dicts[0]['pred_scores'][max_idx]
+                confidences.append(best_confidence.item())
+            
+            if not OPEN3D_FLAG:
+                mlab.show(stop=True)
+    
+    return confidences, validation_file_list
+
 def detection_iou_custom_dataset(args, cfg, attack_file_paths):
     """
     Perform detection and compute IoU for a custom dataset.
@@ -325,13 +380,13 @@ def detection_bboxes(args, cfg):
             vehicle_bboxes = pred_dicts[0]['pred_boxes'][mask]
             
             if vehicle_bboxes.numel() == 0:
-                bboxes.append(torch.tensor(-1))
+                bboxes.append(torch.tensor([-1, -1, -1, -1, -1, -1, -1]))
             else:
                 true_bbox = validation_bboxes[idx]
                 true_bbox = np.tile(true_bbox, (vehicle_bboxes.shape[0], 1))
                 true_bbox = torch.tensor(true_bbox, device='cuda')
                 
-                best_bbox = bbox.bbox3d_best_iou_bbox(true_bbox, vehicle_bboxes)
+                best_bbox = bbox.bbox3d_best_iou_bbox(vehicle_bboxes, true_bbox)
                 bboxes.append(best_bbox)
             
             if not OPEN3D_FLAG:

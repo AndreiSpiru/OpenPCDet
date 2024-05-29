@@ -3,6 +3,7 @@ from pcdet.utils import common_utils
 import torch
 import numpy as np
 from copy import copy
+import os
 
 def cart2sph(x, y, z):
     """
@@ -51,6 +52,7 @@ def ray_shifting(point_to_be_shifted, shifting_distance):
 
     shifted_point = torch.tensor([shifted_x, shifted_y, shifted_z, shifted_intensity])
     return shifted_point
+
 
 def get_point_mask_in_boxes3d(points, boxes3d):
     """
