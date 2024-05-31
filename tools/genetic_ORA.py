@@ -73,6 +73,12 @@ def load_attack_points_from_path(root_path, args, cfg):
                 points, points_in_bbox, _ = utils.get_point_mask_in_boxes3d(initial_points, bbox)
                 non_zero_indices = points_in_bbox.squeeze().nonzero().squeeze()
 
+                if non_zero_indices.numel() == 0:
+                    non_zero_indices = torch.tensor([])
+                
+                if non_zero_indices.numel() == 1:
+                    non_zero_indices = torch.tensor([non_zero_indices.item()])
+
                 base_file_npy = os.path.basename(file_npy)
                 attack_path = os.path.join(condition_path_attack, base_file_npy)
 
@@ -133,6 +139,45 @@ def mutate(individual, max_length, indpb=0.05):
             if new_value != original_value:
                 individual[i] = new_value
     return (individual,)
+
+# Define elitism function
+def elitism(population, offspring, elite_size=5):
+    sorted_population = sorted(population, key=lambda ind: ind.fitness.values)
+    elite_individuals = sorted_population[:elite_size]
+    offspring = sorted(offspring, key=lambda ind: ind.fitness.values)[:len(population) - elite_size]
+    offspring.extend(elite_individuals)
+    return offspring
+
+def check_overlap_hamming_distance_percentage(arr1, arr2):
+    """
+    Check if two arrays share more than 75% of their entries.
+
+    Args:
+    arr1 (np.array): First array.
+    arr2 (np.array): Second array of the same length as arr1.
+
+    Returns:
+    bool: True if more than 75% of the entries are the same between the two arrays, False otherwise.
+    """
+    if arr1.shape != arr2.shape:
+        raise ValueError("Both arrays must have the same shape.")
+
+    # Calculate the number of matching entries
+    matches = np.sum(arr1 == arr2)
+
+    # Calculate the percentage of matching entries
+    percentage = matches / arr1.size
+
+    # Check if the percentage of matching entries is greater than 75%
+    return percentage > 0.75
+
+# Define fitness sharing function
+def fitness_sharing(individuals):
+    for ind in individuals:
+        shared_fitness = ind.fitness.values[0]
+        count = sum(1 for other in individuals if check_overlap_hamming_distance_percentage(np.array(ind), np.array(other)))
+        ind.fitness.values = (shared_fitness * (count**0.1),)
+    return individuals
 
 def crossover(ind1, ind2):
     """
@@ -226,7 +271,7 @@ def main():
     """
     Main function to run the genetic algorithm for Object Removal Attacks (ORA).
     """
-    population_size = 10    
+    population_size = 5    
 
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMin)
@@ -244,11 +289,16 @@ def main():
     toolbox.register("evaluate", evaluate, datasets=datasets, original_points=original_points, 
                      attack_paths=attack_paths, max_length=max_length, args=args, cfg=cfg)
     toolbox.register("mate", crossover)
-    toolbox.register("mutate", mutate, max_length=max_length, indpb=0.2)
+    toolbox.register("mutate", mutate, max_length=max_length)
     toolbox.register("select", tools.selTournament, tournsize=3)
 
 
     population = toolbox.population(n=population_size)
+
+    # Evaluate all individuals in the initial population
+    fitnesses = map(toolbox.evaluate, population)
+    for ind, fit in zip(population, fitnesses):
+        ind.fitness.values = fit
 
     kf = KFold(n_splits=5)
     results = []
@@ -276,25 +326,26 @@ def main():
         toolbox.register("evaluate", evaluate, datasets=train_datasets, original_points=train_points, 
                      attack_paths=train_paths, max_length=max_length, args=args, cfg=cfg)
         
-        for gen in range(2):
+        for gen in range(5):
             logging.critical(f"Generation {gen} started")
-            offspring = algorithms.varAnd(population, toolbox, cxpb=0.5, mutpb=0.2)
-            fits = list(map(toolbox.evaluate, offspring))
+            # Selection
+            parents = toolbox.select(population, len(population))
 
-            fitnesses = []
-            for fit, ind in zip(fits, offspring):
+            offspring = algorithms.varOr(parents, toolbox, lambda_=len(population), cxpb=0.5, mutpb=0.2)
+
+            # Evaluate the individuals with an invalid fitness
+            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            fitnesses = map(toolbox.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
-                fitnesses.append(fit)
+            
+            offspring = fitness_sharing(offspring)
+            
+            population = elitism(population, offspring, elite_size=1)  # Apply elitism here
 
-            best_scores.append(min(fitnesses))
-            mean_scores.append(np.mean(fitnesses))
-            worst_scores.append(max(fitnesses))
-
-            population = toolbox.select(offspring, len(population) - population_size // 10)
-
-            # Inject random individuals to maintain diversity
-            inject_random_individuals(population, toolbox, n=population_size // 10)
-
+            best_scores.append(min(ind.fitness.values[0] for ind in population))
+            mean_scores.append(np.mean([ind.fitness.values[0] for ind in population]))
+            worst_scores.append(max(ind.fitness.values[0] for ind in population))
 
             logging.critical(f"Generation {gen} completed with best fitness {best_scores[-1]}")
         

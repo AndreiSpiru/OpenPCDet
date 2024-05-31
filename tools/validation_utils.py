@@ -99,41 +99,42 @@ def create_or_modify_excel_generic(scores, paths, detector, file_path="genetic_r
     sensors = ["HDL-64E", "VLP-16"]
     conditions = ["clear", "light", "moderate", "heavy", "extreme"]
     thresholds = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    results = zip(scores, paths)
+    results = list(zip(scores, paths))
     for sensor in sensors:
-        sensor_results = [(iou, path) for iou, path in results if sensor in path]
-        for condition in conditions:
-            condition_results = [(iou, path) for iou, path in sensor_results if condition in path]
-            if len(condition_results) > 0:
-                for threshold in thresholds:
-                    total = len(condition_results)
-                    positive = sum(1 for x, _ in condition_results if x > threshold)
-                    entry = [sensor, condition, detector, "genetic", threshold, 200, total, positive, positive / total]
+        sensor_results = [(iou, path) for (iou, path) in results if sensor in path]
+        if len(sensor_results) > 0:
+            for condition in conditions:
+                condition_results = [(iou, path) for iou, path in sensor_results if condition in path]
+                if len(condition_results) > 0:
+                    for threshold in thresholds:
+                        total = len(condition_results)
+                        positive = sum(1 for x, _ in condition_results if x > threshold)
+                        entry = [sensor, condition, detector, "genetic", threshold, 200, total, positive, positive / total]
 
-                    if os.path.exists(file_path):
-                        # If the file already exists, load it and append data
-                        wb = openpyxl.load_workbook(file_path)
-                        ws = wb.active
-                        # Check if the worksheet is empty and add column names if necessary
-                        if ws.max_row == 0:
+                        if os.path.exists(file_path):
+                            # If the file already exists, load it and append data
+                            wb = openpyxl.load_workbook(file_path)
+                            ws = wb.active
+                            # Check if the worksheet is empty and add column names if necessary
+                            if ws.max_row == 0:
+                                ws.append(['Sensor', 'Condition', 'Detector', 'Attack type', 'IoU Threshold', 'Budget', 'Total', 'Positive', 'Recall'])
+                            exists = False
+                            for row in ws.iter_rows(min_row=2):
+                                if row[1] == sensor and row[2] == condition and row[5] == threshold:
+                                    exists = True
+                                    row[7] += total
+                                    row[8] += positive
+                                    row[9] == row[7] / row[8]
+                            if not exists:
+                                ws.append(entry)
+                        else:
+                            # If the file doesn't exist, create a new one and add data
+                            wb = openpyxl.Workbook()
+                            ws = wb.active
                             ws.append(['Sensor', 'Condition', 'Detector', 'Attack type', 'IoU Threshold', 'Budget', 'Total', 'Positive', 'Recall'])
-                        exists = False
-                        for row in ws.iter_rows(min_row=2):
-                            if row[1] == sensor and row[2] == condition and row[5] == threshold:
-                                exists = True
-                                row[7] += total
-                                row[8] += positive
-                                row[9] == row[7] / row[8]
-                        if not exists:
                             ws.append(entry)
-                    else:
-                        # If the file doesn't exist, create a new one and add data
-                        wb = openpyxl.Workbook()
-                        ws = wb.active
-                        ws.append(['Sensor', 'Condition', 'Detector', 'Attack type', 'IoU Threshold', 'Budget', 'Total', 'Positive', 'Recall'])
-                        ws.append(entry)
-                    
-                    wb.save(file_path)
+                        
+                        wb.save(file_path)
 
 
 

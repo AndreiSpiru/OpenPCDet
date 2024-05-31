@@ -24,7 +24,7 @@ from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
 
 # Command to run:
-# python visualisation_test.py --cfg_file cfgs/kitti_models/pointpillar.yaml --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E/clear/
+# python3 visualisation_test.py --cfg_file cfgs/kitti_models/pointpillar.yaml --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E/clear/
 
 def custom_sort_key(filepath):
     """
@@ -392,18 +392,18 @@ def detection_bboxes(args, cfg):
                 max_iou1 = max_iou1.cpu()
                 iou.append(max_iou1.item())
                 
-                V.draw_scenes(
-                    points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
-                    ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-                )
-                V.draw_scenes(
-                    points=data_dict['points'][:, 1:], ref_boxes=true_bbox,
-                    ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-                )
-                V.draw_scenes(
-                    points=data_dict['points'][:, 1:], ref_boxes=true_bbox1,
-                    ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-                )
+                # V.draw_scenes(
+                #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+                #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+                # )
+                # V.draw_scenes(
+                #     points=data_dict['points'][:, 1:], ref_boxes=true_bbox,
+                #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+                # )
+                # V.draw_scenes(
+                #     points=data_dict['points'][:, 1:], ref_boxes=true_bbox1,
+                #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+                # )
 
             if not OPEN3D_FLAG:
                 mlab.show(stop=True)
