@@ -374,6 +374,7 @@ def detection_bboxes(args, cfg):
             if vehicle_bboxes.numel() == 0:
                 iou.append(0)
             else:
+                print(validation_file_list[idx])
                 print(pred_dicts[0]['pred_boxes'][0])
                 true_bbox = validation_bboxes[idx]
                 print(true_bbox)
@@ -392,18 +393,18 @@ def detection_bboxes(args, cfg):
                 max_iou1 = max_iou1.cpu()
                 iou.append(max_iou1.item())
                 
-                # V.draw_scenes(
-                #     points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
-                #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-                # )
-                # V.draw_scenes(
-                #     points=data_dict['points'][:, 1:], ref_boxes=true_bbox,
-                #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-                # )
-                # V.draw_scenes(
-                #     points=data_dict['points'][:, 1:], ref_boxes=true_bbox1,
-                #     ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-                # )
+                V.draw_scenes(
+                    points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+                    ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+                )
+                V.draw_scenes(
+                    points=data_dict['points'][:, 1:], ref_boxes=true_bbox,
+                    ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+                )
+                V.draw_scenes(
+                    points=data_dict['points'][:, 1:], ref_boxes=true_bbox1,
+                    ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+                )
 
             if not OPEN3D_FLAG:
                 mlab.show(stop=True)

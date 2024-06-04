@@ -12,6 +12,12 @@ import matplotlib.pyplot as plt
 import logging
 from copy import copy
 
+# Unset cuDNN logging environment variables
+if 'CUDNN_LOGINFO_DBG' in os.environ:
+    del os.environ['CUDNN_LOGINFO_DBG']
+if 'CUDNN_LOGDEST_DBG' in os.environ:
+    del os.environ['CUDNN_LOGDEST_DBG']
+
 # Command to run the script:
 # python genetic_ORA.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
 
@@ -176,7 +182,7 @@ def fitness_sharing(individuals):
     for ind in individuals:
         shared_fitness = ind.fitness.values[0]
         count = sum(1 for other in individuals if check_overlap_hamming_distance_percentage(np.array(ind), np.array(other)))
-        ind.fitness.values = (shared_fitness * (count**0.1),)
+        ind.fitness.values = (shared_fitness * (count**0.01),)
     return individuals
 
 def crossover(ind1, ind2):
@@ -271,7 +277,7 @@ def main():
     """
     Main function to run the genetic algorithm for Object Removal Attacks (ORA).
     """
-    population_size = 5    
+    population_size = 50    
 
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMin)
@@ -326,7 +332,7 @@ def main():
         toolbox.register("evaluate", evaluate, datasets=train_datasets, original_points=train_points, 
                      attack_paths=train_paths, max_length=max_length, args=args, cfg=cfg)
         
-        for gen in range(5):
+        for gen in range(30):
             logging.critical(f"Generation {gen} started")
             # Selection
             parents = toolbox.select(population, len(population))
@@ -341,7 +347,7 @@ def main():
             
             offspring = fitness_sharing(offspring)
             
-            population = elitism(population, offspring, elite_size=1)  # Apply elitism here
+            population = elitism(population, offspring, elite_size=5)  # Apply elitism here
 
             best_scores.append(min(ind.fitness.values[0] for ind in population))
             mean_scores.append(np.mean([ind.fitness.values[0] for ind in population]))

@@ -12,6 +12,12 @@ import logging
 from joblib import Parallel, delayed
 import pickle
 
+# Unset cuDNN logging environment variables
+if 'CUDNN_LOGINFO_DBG' in os.environ:
+    del os.environ['CUDNN_LOGINFO_DBG']
+if 'CUDNN_LOGDEST_DBG' in os.environ:
+    del os.environ['CUDNN_LOGDEST_DBG']
+
 
 # python3 bayesian_ORA1.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
 
@@ -114,9 +120,9 @@ def bayesian_optimisation_case(args, cfg, data, initial_points, attack_path):
     """
     torch.cuda.init()
     torch.cuda.set_device(0)
-    if len(data) < args.budget:
+    if len(data) < 3:
         all_indices = [index for index in range(len(data))]
-        return (black_box_function(all_indices, data, initial_points, attack_path, args, cfg))
+        return (black_box_function(all_indices, data, initial_points, attack_path, args, cfg), all_indices)
     budget = min(args.budget, len(data))
     k = budget  # Number of indices to select (assuming budget represents this)
 
@@ -157,11 +163,12 @@ if __name__ == '__main__':
     args, cfg = validation.parse_config()
     dataset, initial_points, attack_paths = load_attack_points_from_path(args, cfg)
 
-    # Perform Bayesian optimization in parallel
-    # 2 parallel procceses is what my machine can handle
-    parallel_results = Parallel(n_jobs=1)(delayed(bayesian_optimisation_case)(args, cfg, data, initial_point, attack_path) 
-                                 for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths))
+    # # Perform Bayesian optimization in parallel
+    # # 2 parallel procceses is what my machine can handle
+    # parallel_results = Parallel(n_jobs=1)(delayed(bayesian_optimisation_case)(args, cfg, data, initial_point, attack_path) 
+    #                              for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths))
     
+    parallel_results = [bayesian_optimisation_case(args, cfg, data, initial_point, attack_path) for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths)]
     results, best_indices = zip(*parallel_results)
     best_indices_list = list(best_indices)
 
@@ -172,8 +179,8 @@ if __name__ == '__main__':
     print(results)
     print(np.mean(results))
 
-    np.save("bayesian_HDL_results", results)
+    np.save("bayesian_VLP_results", results)
 
     # Save best_indices using pickle
-    with open("bayesian_HDL_indices.pkl", "wb") as f:
+    with open("bayesian_VLP_indices.pkl", "wb") as f:
         pickle.dump(best_indices_list, f)
