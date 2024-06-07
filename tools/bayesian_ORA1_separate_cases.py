@@ -6,10 +6,11 @@ import validation
 import torch
 import ORA_utils as utils
 import os
+import psutil
 from copy import copy
 import logging
-import validation_utils
-from sklearn.model_selection import KFold
+from joblib import Parallel, delayed
+import pickle
 
 # Unset cuDNN logging environment variables
 if 'CUDNN_LOGINFO_DBG' in os.environ:
@@ -22,7 +23,7 @@ if 'CUDNN_LOGDEST_DBG' in os.environ:
 
 logging.basicConfig(filename='bayesian_log1.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def black_box_function(indices, datasets, initial_points, attack_path, max_length, args, cfg):
+def black_box_function(indices, data, initial_points, attack_path, args, cfg):
     """
     Black-box function : minimise IoU
     
@@ -37,68 +38,19 @@ def black_box_function(indices, datasets, initial_points, attack_path, max_lengt
     Returns:
         float: The score of the black-box function.
     """
-    for idx, (data, initial_points, attack_path) in enumerate(zip(datasets, initial_points, attack_paths)):
-        scaled_indices = utils.scale_indices(indices, len(data), max_length)
-        points = utils.shift_selected_points(initial_points, data[scaled_indices], 2)
+    selected_points = data[indices]
+    points = utils.shift_selected_points(initial_points, selected_points, 2)
 
-        os.makedirs(os.path.dirname(attack_path), exist_ok=True)
-        attack_path_bin = attack_path[:-3] + "bin"
-        try:
-            points.astype(np.float32).tofile(attack_path_bin)
-        except Exception as e:
-            print(f"Failed to write to {attack_path_bin}: {e}")
+    attack_path_bin = attack_path[:-3] + "bin"
+    print(f"Attack path: {attack_path}")
+    try:
+        points.astype(np.float32).tofile(attack_path_bin)
+    except Exception as e:
+        logging.error(f"Failed to write to {attack_path_bin}: {e}")
 
-    scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
-    logging.critical(f"Mean score: {np.mean(scores)}")
-    print(f"Mean score: {np.mean(scores)}")
-    return np.mean(scores)
-    # selected_points = data[indices]
-    # points = utils.shift_selected_points(initial_points, selected_points, 2)
-
-    # attack_path_bin = attack_path[:-3] + "bin"
-    # print(f"Attack path: {attack_path}")
-    # try:
-    #     points.astype(np.float32).tofile(attack_path_bin)
-    # except Exception as e:
-    #     logging.error(f"Failed to write to {attack_path_bin}: {e}")
-
-    # scores, _ = validation.detection_iou_custom_dataset(args, cfg, [attack_path])
-    # print(f"Scores: {scores}")
-    # return scores[0]
-
-def black_box_function_save(individual, datasets, original_points, attack_paths, max_length, args, cfg):
-    """
-    Evaluate the fitness of an individual by applying the attack and calculating the detection IOU.
-    
-    Args:
-        individual (list): Individual to evaluate.
-        datasets (list): List of datasets.
-        original_points (list): List of original points.
-        attack_paths (list): List of paths to save attacked files.
-        max_length (int): Maximum length of the individual.
-        args: Command line arguments.
-        cfg: Configuration settings.
-    
-    Returns:
-        tuple: Mean IOU score.
-    """
-    for idx, (data, initial_points, attack_path) in enumerate(zip(datasets, original_points, attack_paths)):
-        scaled_indices = utils.scale_indices(individual, len(data), max_length)
-        points = utils.shift_selected_points(initial_points, data[scaled_indices], 2)
-
-        os.makedirs(os.path.dirname(attack_path), exist_ok=True)
-        attack_path_bin = attack_path[:-3] + "bin"
-        try:
-            points.astype(np.float32).tofile(attack_path_bin)
-        except Exception as e:
-            print(f"Failed to write to {attack_path_bin}: {e}")
-
-
-    scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
-    validation_utils.create_or_modify_excel_generic(scores, attack_paths, args.ckpt, type="bayesian", file_path="bayesian_results.xlsx")
-    logging.critical(f"Mean score: {np.mean(scores)}")
-    print(f"Mean score: {np.mean(scores)}")
-    return np.mean(scores)
+    scores, _ = validation.detection_iou_custom_dataset(args, cfg, [attack_path])
+    print(f"Scores: {scores}")
+    return scores[0]
 
 def load_attack_points_from_path(args, cfg):
     """
@@ -152,7 +104,7 @@ def load_attack_points_from_path(args, cfg):
 
     return datasets, original_points, attack_paths
 
-def bayesian_optimisation_combined(args, cfg, datasets, initial_points, attack_path, max_length):
+def bayesian_optimisation_case(args, cfg, data, initial_points, attack_path):
     """
     Perform Bayesian Optimization
     
@@ -168,21 +120,23 @@ def bayesian_optimisation_combined(args, cfg, datasets, initial_points, attack_p
     """
     torch.cuda.init()
     torch.cuda.set_device(0)
-
-    budget = min(args.budget, max_length)
+    if len(data) < 3:
+        all_indices = [index for index in range(len(data))]
+        return (black_box_function(all_indices, data, initial_points, attack_path, args, cfg), all_indices)
+    budget = min(args.budget, len(data))
     k = budget  # Number of indices to select (assuming budget represents this)
-    
+
     # Create a named search space
-    search_space = [Integer(0, max_length, name=f'index_{i}') for i in range(k)]
+    search_space = [Integer(0, data.shape[0] - 1, name=f'index_{i}') for i in range(k)]
 
     # Create a closure for the black-box function with additional arguments
-    def make_objective(datasets, initial_points, attack_path, max_length, args, cfg):
+    def make_objective(data, initial_points, attack_path, args, cfg):
         def objective(indices):
-            indices = list(set(int(i) for i in indices if i < max_length))
-            return black_box_function(indices, datasets, initial_points, attack_path, max_length, args, cfg)
+            indices = list(set(int(i) for i in indices if i < data.shape[0]))
+            return black_box_function(indices, data, initial_points, attack_path, args, cfg)
         return objective
 
-    objective_with_args = make_objective(datasets, initial_points, attack_path, max_length, args, cfg)
+    objective_with_args = make_objective(data, initial_points, attack_path, args, cfg)
 
     @use_named_args(search_space)
     def wrapped_objective(**kwargs):
@@ -200,7 +154,7 @@ def bayesian_optimisation_combined(args, cfg, datasets, initial_points, attack_p
     )
 
     # Print the best result
-    best_indices = list(set(int(i) for i in result.x if i < max_length))
+    best_indices = list(set(int(i) for i in result.x if i < data.shape[0]))
     print("Best subset of rows indices:", best_indices)
     print("Minimum value of the black-box function:", result.fun)
     return result.fun, best_indices
@@ -213,37 +167,20 @@ if __name__ == '__main__':
     # # 2 parallel procceses is what my machine can handle
     # parallel_results = Parallel(n_jobs=1)(delayed(bayesian_optimisation_case)(args, cfg, data, initial_point, attack_path) 
     #                              for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths))
-    kf = KFold(n_splits=5)
-    fold_count = 0
-    max_length = max(len(dataset) for dataset in dataset)
-    validation_results = []
-    for train_index, test_index in kf.split(dataset):
-        fold_count += 1
-        logging.critical(f"Fold {fold_count} started")
+    
+    parallel_results = [bayesian_optimisation_case(args, cfg, data, initial_point, attack_path) for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths)]
+    results, best_indices = zip(*parallel_results)
+    best_indices_list = list(best_indices)
 
-        train_datasets = [dataset[i] for i in train_index]
-        test_datasets = [dataset[i] for i in test_index]
-
-        train_points = [initial_points[i] for i in train_index]
-        test_points = [initial_points[i] for i in test_index]
-
-        train_paths = [attack_paths[i] for i in train_index]
-        test_paths = [attack_paths[i] for i in test_index]
-
-        results, best_indices = bayesian_optimisation_combined(args, cfg, train_datasets, train_points, train_paths, max_length)
-
-        validation_result = black_box_function_save(best_indices, test_datasets, test_points, test_paths, max_length, args, cfg)
-        logging.critical(f"Fold done with validation result {validation_result}")
-        print(f"Fold done with validation result {validation_result}")
-        validation_results.append(validation_result)
-
-
-
-
-    # parallel_results = [bayesian_optimisation_combined(args, cfg, data, initial_point, attack_path) for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths)]
-    # results, best_indices = zip(*parallel_results)
-    # best_indices_list = list(best_indices)
+    logging.critical(f"Best Indices: {best_indices}")
+    logging.critical(f"Final Result: {results}")
     logging.critical(f"Mean: {np.mean(results)}")
 
     print(results)
     print(np.mean(results))
+
+    np.save("bayesian_VLP_results", results)
+
+    # Save best_indices using pickle
+    with open("bayesian_VLP_indices.pkl", "wb") as f:
+        pickle.dump(best_indices_list, f)

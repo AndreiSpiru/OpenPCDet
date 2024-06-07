@@ -11,6 +11,8 @@ import torch
 import matplotlib.pyplot as plt
 import logging
 from copy import copy
+import resource
+import psutil
 
 # Unset cuDNN logging environment variables
 if 'CUDNN_LOGINFO_DBG' in os.environ:
@@ -154,36 +156,52 @@ def elitism(population, offspring, elite_size=5):
     offspring.extend(elite_individuals)
     return offspring
 
-def check_overlap_hamming_distance_percentage(arr1, arr2):
-    """
-    Check if two arrays share more than 75% of their entries.
+# def check_overlap_hamming_distance_percentage(arr1, arr2):
+#     """
+#     Check if two arrays share more than 75% of their entries.
 
-    Args:
-    arr1 (np.array): First array.
-    arr2 (np.array): Second array of the same length as arr1.
+#     Args:
+#     arr1 (np.array): First array.
+#     arr2 (np.array): Second array of the same length as arr1.
 
-    Returns:
-    bool: True if more than 75% of the entries are the same between the two arrays, False otherwise.
-    """
-    if arr1.shape != arr2.shape:
-        raise ValueError("Both arrays must have the same shape.")
+#     Returns:
+#     bool: True if more than 75% of the entries are the same between the two arrays, False otherwise.
+#     """
+#     if arr1.shape != arr2.shape:
+#         raise ValueError("Both arrays must have the same shape.")
 
-    # Calculate the number of matching entries
-    matches = np.sum(arr1 == arr2)
+#     # Calculate the number of matching entries
+#     matches = np.sum(arr1 == arr2)
 
-    # Calculate the percentage of matching entries
-    percentage = matches / arr1.size
+#     # Calculate the percentage of matching entries
+#     percentage = matches / arr1.size
 
-    # Check if the percentage of matching entries is greater than 75%
-    return percentage > 0.75
+#     # Check if the percentage of matching entries is greater than 75%
+#     return percentage > 0.75python3 bayesian_ORA1.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
 
-# Define fitness sharing function
-def fitness_sharing(individuals):
+# # Define fitness sharing function
+# def fitness_sharing(individuals):
+#     for ind in individuals:
+#         shared_fitness = ind.fitness.values[0]
+#         count = sum(1 for other in individuals if check_overlap_hamming_distance_percentage(np.array(ind), np.array(other)))
+#         ind.fitness.values = (shared_fitness * (count**0.01),)
+#     return individuals
+
+def fitness_sharing(individuals, sigma_share, alpha=1):
     for ind in individuals:
         shared_fitness = ind.fitness.values[0]
-        count = sum(1 for other in individuals if check_overlap_hamming_distance_percentage(np.array(ind), np.array(other)))
-        ind.fitness.values = (shared_fitness * (count**0.01),)
+        sh_sum = sum(
+            1 - (hamming_distance(np.array(ind), np.array(other)) / sigma_share) ** alpha 
+            for other in individuals if hamming_distance(np.array(ind), np.array(other)) < sigma_share
+        )
+        # For minimization, we add a penalty proportional to the similarity count
+        penalty = shared_fitness * sh_sum
+        ind.fitness.values = (shared_fitness + penalty,)
     return individuals
+
+def hamming_distance(ind1, ind2):
+    return np.sum(ind1 != ind2)
+
 
 def crossover(ind1, ind2):
     """
@@ -214,7 +232,7 @@ def evaluate(individual, datasets, original_points, attack_paths, max_length, ar
         args: Command line arguments.
         cfg: Configuration settings.
     
-    Returns:
+    Returns:python3 bayesian_ORA1.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
         tuple: Mean IOU score.
     """
     for idx, (data, initial_points, attack_path) in enumerate(zip(datasets, original_points, attack_paths)):
@@ -262,7 +280,7 @@ def evaluate_and_save(individual, datasets, original_points, attack_paths, max_l
 
 
     scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
-    validation_utils.create_or_modify_excel_generic(scores, attack_paths, args.ckpt)
+    validation_utils.create_or_modify_excel_generic(scores, attack_paths, args.ckpt, type="genetic")
     logging.critical(f"Mean score: {np.mean(scores)}")
     print(f"Mean score: {np.mean(scores)}")
     return (np.mean(scores),)
@@ -272,7 +290,7 @@ def inject_random_individuals(population, toolbox, n=5):
     for _ in range(n):
         new_individual = toolbox.individual()
         population.append(new_individual)
-        
+      
 def main():
     """
     Main function to run the genetic algorithm for Object Removal Attacks (ORA).
@@ -333,6 +351,7 @@ def main():
                      attack_paths=train_paths, max_length=max_length, args=args, cfg=cfg)
         
         for gen in range(30):
+            torch.cuda.empty_cache()
             logging.critical(f"Generation {gen} started")
             # Selection
             parents = toolbox.select(population, len(population))
@@ -382,4 +401,5 @@ def main():
     logging.info("Saved best individual")
 
 if __name__ == "__main__":
+    torch.cuda.set_per_process_memory_fraction(0.8)
     main()

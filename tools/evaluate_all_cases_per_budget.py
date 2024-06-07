@@ -42,7 +42,7 @@ def main():
 
                         for threshold in thresholds:
                             # Create or modify the Excel file with the evaluation results
-                            utils.create_or_modify_excel_recall(case_args.result_path, case_args.data_path, threshold, case_args.ckpt, iou, budget)
+                            utils.create_or_modify_excel_recall(case_args.result_path, case_args.data_path, threshold, case_args.ckpt, iou, budget, "random")
 
 if __name__ == '__main__':
     main()

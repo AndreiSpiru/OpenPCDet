@@ -33,7 +33,7 @@ def create_or_modify_excel(file_path, data_path, threshold, model, data):
     
     wb.save(file_path)
 
-def create_or_modify_excel_recall(file_path, data_path, threshold, model, data, budget):
+def create_or_modify_excel_recall(file_path, data_path, threshold, model, data, budget, type):
     """
     Create or modify an Excel file to append recall results.
     
@@ -45,7 +45,7 @@ def create_or_modify_excel_recall(file_path, data_path, threshold, model, data, 
         data (list): List of detection results.
         budget (int): Budget for the recall calculation.
     """
-    parsed_data = parse_path_and_data_recall(data_path, threshold, model, data, budget)
+    parsed_data = parse_path_and_data_recall(data_path, threshold, model, data, budget, type)
     
     if os.path.exists(file_path):
         # If the file already exists, load it and append data
@@ -53,13 +53,13 @@ def create_or_modify_excel_recall(file_path, data_path, threshold, model, data, 
         ws = wb.active
         # Check if the worksheet is empty and add column names if necessary
         if ws.max_row == 0:
-            ws.append(['Sensor', 'Condition', 'Detector', 'IoU Threshold', 'Budget', 'Recall'])
+            ws.append(['Sensor', 'Condition', 'Detector', 'Attack type', 'IoU Threshold', 'Budget', 'Total', 'Positive', 'Recall'])
         ws.append(parsed_data)
     else:
         # If the file doesn't exist, create a new one and add data
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.append(['Sensor', 'Condition', 'Detector', 'IoU Threshold', 'Budget', 'Recall'])
+        ws.append(['Sensor', 'Condition', 'Detector', 'Attack type', 'IoU Threshold', 'Budget', 'Total', 'Positive, ''Recall'])
         ws.append(parsed_data)
     
     wb.save(file_path)
@@ -95,7 +95,7 @@ def create_or_modify_excel_recall_distance(file_path, data_path, threshold, mode
     
     wb.save(file_path)
 
-def create_or_modify_excel_generic(scores, paths, detector, file_path="genetic_results.xlsx"):
+def create_or_modify_excel_generic(scores, paths, detector, type, file_path="genetic_results.xlsx"):
     sensors = ["HDL-64E", "VLP-16"]
     conditions = ["clear", "light", "moderate", "heavy", "extreme"]
     thresholds = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -109,7 +109,7 @@ def create_or_modify_excel_generic(scores, paths, detector, file_path="genetic_r
                     for threshold in thresholds:
                         total = len(condition_results)
                         positive = sum(1 for x, _ in condition_results if x > threshold)
-                        entry = [sensor, condition, detector, "genetic", threshold, 200, total, positive, positive / total]
+                        entry = [sensor, condition, detector, type, threshold, 200, total, positive, positive / total]
 
                         if os.path.exists(file_path):
                             # If the file already exists, load it and append data
@@ -180,7 +180,7 @@ def parse_path_and_data(data_path, threshold, model, data):
     
     return output
 
-def parse_path_and_data_recall(data_path, threshold, model, data, budget):
+def parse_path_and_data_recall(data_path, threshold, model, data, budget, type):
     """
     Parse the data path and recall results for appending to Excel.
     
@@ -216,9 +216,14 @@ def parse_path_and_data_recall(data_path, threshold, model, data, budget):
         output.append('extreme')
     
     output.append(model)
+    output.append(type)
     output.append(threshold)
     output.append(budget)
-    output.append(sum(1 for x in data if x > threshold) / len(data))
+    total = len(data)
+    positive = sum(1 for x in data if x > threshold)
+    output.append(total)
+    output.append(positive)
+    output.append(positive/ total)
     
     return output
 

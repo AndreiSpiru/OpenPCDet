@@ -274,10 +274,10 @@ def evaluate_and_save(individual, datasets, original_points, attack_paths, max_l
 
     
     first_detector_scores, _ = validation.detection_iou_custom_dataset(first_detector_args, first_detector_cfg, attack_paths)
-    validation_utils.create_or_modify_excel_generic(first_detector_scores, attack_paths, first_detector_scores.ckpt)
+    validation_utils.create_or_modify_excel_generic(first_detector_scores, attack_paths, first_detector_args.ckpt)
 
     second_detector_scores, _ = validation.detection_iou_custom_dataset(second_detector_args, second_detector_config, attack_paths)
-    validation_utils.create_or_modify_excel_generic(second_detector_scores, attack_paths, second_detector_scores.ckpt)
+    validation_utils.create_or_modify_excel_generic(second_detector_scores, attack_paths, second_detector_args.ckpt)
 
     scores = first_detector_scores + second_detector_scores
     logging.critical(f"Mean score: {np.mean(scores)}")
