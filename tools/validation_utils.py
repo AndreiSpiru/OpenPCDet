@@ -3,6 +3,8 @@ import os
 import torch
 import numpy as np
 
+# General validation utils, mostly used to convert our results to excels
+
 def create_or_modify_excel(file_path, data_path, threshold, model, data):
     """
     Create or modify an Excel file to append detection results.
@@ -64,6 +66,36 @@ def create_or_modify_excel_recall(file_path, data_path, threshold, model, data, 
     
     wb.save(file_path)
 
+def create_or_modify_excel_recall_confidence(file_path, data_path, threshold, model, data, budget, type):
+    """
+    Create or modify an Excel file to append recall results.
+    
+    Args:
+        file_path (str): Path to the Excel file.
+        data_path (str): Path to the data directory.
+        threshold (float): IoU threshold for detection.
+        model (str): Model name.
+        data (list): List of detection results.
+        budget (int): Budget for the recall calculation.
+    """
+    parsed_data = parse_path_and_data_recall(data_path, threshold, model, data, budget, type)
+    
+    if os.path.exists(file_path):
+        # If the file already exists, load it and append data
+        wb = openpyxl.load_workbook(file_path)
+        ws = wb.active
+        # Check if the worksheet is empty and add column names if necessary
+        if ws.max_row == 0:
+            ws.append(['Sensor', 'Condition', 'Detector', 'Attack type', 'Confidence Threshold', 'Budget', 'Total', 'Positive', 'Recall'])
+        ws.append(parsed_data)
+    else:
+        # If the file doesn't exist, create a new one and add data
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(['Sensor', 'Condition', 'Detector', 'Attack type', 'Confidence Threshold', 'Budget', 'Total', 'Positive, ''Recall'])
+        ws.append(parsed_data)
+    
+    wb.save(file_path)
 def create_or_modify_excel_recall_distance(file_path, data_path, threshold, model, data, budget, distances):
     """
     Create or modify an Excel file to append recall results.

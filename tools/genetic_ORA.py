@@ -20,6 +20,8 @@ if 'CUDNN_LOGINFO_DBG' in os.environ:
 if 'CUDNN_LOGDEST_DBG' in os.environ:
     del os.environ['CUDNN_LOGDEST_DBG']
 
+# Main implementation of GORA
+
 # Command to run the script:
 # python genetic_ORA.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
 
@@ -80,7 +82,8 @@ def load_attack_points_from_path(root_path, args, cfg):
 
                 points, points_in_bbox, _ = utils.get_point_mask_in_boxes3d(initial_points, bbox)
                 non_zero_indices = points_in_bbox.squeeze().nonzero().squeeze()
-
+		
+		# Check for edge cases
                 if non_zero_indices.numel() == 0:
                     non_zero_indices = torch.tensor([])
                 
@@ -148,6 +151,7 @@ def mutate(individual, max_length, indpb=0.05):
                 individual[i] = new_value
     return (individual,)
 
+
 # Define elitism function
 def elitism(population, offspring, elite_size=5):
     sorted_population = sorted(population, key=lambda ind: ind.fitness.values)
@@ -156,67 +160,66 @@ def elitism(population, offspring, elite_size=5):
     offspring.extend(elite_individuals)
     return offspring
 
-# def check_overlap_hamming_distance_percentage(arr1, arr2):
-#     """
-#     Check if two arrays share more than 75% of their entries.
 
-#     Args:
-#     arr1 (np.array): First array.
-#     arr2 (np.array): Second array of the same length as arr1.
+def check_overlap_hamming_distance_percentage(arr1, arr2):
+    """
+    Check if two arrays share more than 75% of their entries.
 
-#     Returns:
-#     bool: True if more than 75% of the entries are the same between the two arrays, False otherwise.
-#     """
-#     if arr1.shape != arr2.shape:
-#         raise ValueError("Both arrays must have the same shape.")
+    Args:
+    arr1 (np.array): First array.
+    arr2 (np.array): Second array of the same length as arr1.
 
-#     # Calculate the number of matching entries
-#     matches = np.sum(arr1 == arr2)
+    Returns:
+    bool: True if more than 75% of the entries are the same between the two arrays, False otherwise.
+    """
+    if arr1.shape != arr2.shape:
+        raise ValueError("Both arrays must have the same shape.")
+    
+    arr1 = np.sort(arr1)
+    arr2 = np.sort(arr2)
 
-#     # Calculate the percentage of matching entries
-#     percentage = matches / arr1.size
+    # Calculate the number of matching entries
+    matches = np.sum(arr1 == arr2)
 
-#     # Check if the percentage of matching entries is greater than 75%
-#     return percentage > 0.75python3 bayesian_ORA1.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
+    # Calculate the percentage of matching entries
+    percentage = matches / arr1.size
 
-# # Define fitness sharing function
-# def fitness_sharing(individuals):
-#     for ind in individuals:
-#         shared_fitness = ind.fitness.values[0]
-#         count = sum(1 for other in individuals if check_overlap_hamming_distance_percentage(np.array(ind), np.array(other)))
-#         ind.fitness.values = (shared_fitness * (count**0.01),)
-#     return individuals
+    # Check if the percentage of matching entries is greater than 75%
+    return percentage > 0.75
 
-def fitness_sharing(individuals, sigma_share, alpha=1):
+
+def fitness_sharing(individuals):
+    """
+    Fitness sharing function as described in report
+    
+    Args:
+        individuals (list): List of all individuals
+    
+    Returns:
+        list: Adjusted individuals.
+    """
     for ind in individuals:
         shared_fitness = ind.fitness.values[0]
-        sh_sum = sum(
-            1 - (hamming_distance(np.array(ind), np.array(other)) / sigma_share) ** alpha 
-            for other in individuals if hamming_distance(np.array(ind), np.array(other)) < sigma_share
-        )
-        # For minimization, we add a penalty proportional to the similarity count
-        penalty = shared_fitness * sh_sum
-        ind.fitness.values = (shared_fitness + penalty,)
+        count = sum(1 for other in individuals if check_overlap_hamming_distance_percentage(np.array(ind), np.array(other)))
+        ind.fitness.values = (shared_fitness * (count**(0.05)),)
     return individuals
 
-def hamming_distance(ind1, ind2):
-    return np.sum(ind1 != ind2)
 
-
-def crossover(ind1, ind2):
+def crossover(ind1, ind2, indpb=0.5):
     """
-    Perform one-point crossover on two individuals.
+    Perform uniform crossover on two individuals.
     
     Args:
         ind1 (list): First individual.
         ind2 (list): Second individual.
+        indpb (float): Independent probability for each attribute to be exchanged.
     
     Returns:
         tuple: Two new individuals after crossover.
     """
-    child1, child2 = tools.cxOnePoint(ind1, ind2)
-    ind1[:] = child1
-    ind2[:] = child2
+    for i in range(len(ind1)):
+        if random.random() < indpb:
+            ind1[i], ind2[i] = ind2[i], ind1[i]
     return ind1, ind2
 
 def evaluate(individual, datasets, original_points, attack_paths, max_length, args, cfg):
@@ -353,10 +356,15 @@ def main():
         for gen in range(30):
             torch.cuda.empty_cache()
             logging.critical(f"Generation {gen} started")
-            # Selection
+
+            population = fitness_sharing(population)
+
             parents = toolbox.select(population, len(population))
 
-            offspring = algorithms.varOr(parents, toolbox, lambda_=len(population), cxpb=0.5, mutpb=0.2)
+            
+            offspring = algorithms.varAnd(parents, toolbox, cxpb=0.5, mutpb=0.2)
+
+            population = elitism(population, offspring, elite_size=5)
 
             # Evaluate the individuals with an invalid fitness
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -364,10 +372,6 @@ def main():
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
             
-            offspring = fitness_sharing(offspring)
-            
-            population = elitism(population, offspring, elite_size=5)  # Apply elitism here
-
             best_scores.append(min(ind.fitness.values[0] for ind in population))
             mean_scores.append(np.mean([ind.fitness.values[0] for ind in population]))
             worst_scores.append(max(ind.fitness.values[0] for ind in population))
@@ -401,5 +405,6 @@ def main():
     logging.info("Saved best individual")
 
 if __name__ == "__main__":
-    torch.cuda.set_per_process_memory_fraction(0.8)
+    # Neccessary for some of the object detectors that use too much memory. Should be commented for PointPillars
+    torch.cuda.set_per_process_memory_fraction(0.7)
     main()

@@ -5,6 +5,8 @@ import numpy as np
 from copy import copy
 import os
 
+# General ORA utils
+
 def cart2sph(x, y, z):
     """
     Transform Cartesian coordinates to spherical coordinates.
@@ -254,7 +256,7 @@ def apply_intensity_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_dist
     points = shift_selected_points(points, selected_points, shifting_distance)
     return points.numpy() if is_numpy else points
 
-def apply_distance_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance=-2):
+def apply_distance_ORA_points_in_boxes3d(points, boxes3d, budget, shifting_distance=2):
     """
     Apply distance-based ORA (Object Removal Attacks) to points within 3D boxes.
     

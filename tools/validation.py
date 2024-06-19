@@ -22,6 +22,9 @@ except ImportError:
     from visual_utils import visualize_utils as V
     OPEN3D_FLAG = False
 
+# Validation methods, does the integration between our attacks and OpenPCDet
+# Based on the demo.py file
+
 def custom_sort_key(filepath):
     """
     Custom sort key to extract numeric part from the filename.

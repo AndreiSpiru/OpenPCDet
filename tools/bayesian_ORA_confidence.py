@@ -17,23 +17,27 @@ if 'CUDNN_LOGINFO_DBG' in os.environ:
 if 'CUDNN_LOGDEST_DBG' in os.environ:
     del os.environ['CUDNN_LOGDEST_DBG']
 
+# Cross-validation confidence BORA
 
-# python3 bayesian_ORA1.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
+# Command to run the script
+# python3 bayesian_ORA1_confidence.py --cfg_file cfgs/kitti_models/pointpillar.yaml --budget 200 --ckpt pointpillar_7728.pth --data_path ~/mavs_code/output_data_converted/0-10/HDL-64E
 
+# Set up logging
 logging.basicConfig(filename='bayesian_log1.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def black_box_function(indices, datasets, initial_points, attack_path, max_length, args, cfg):
     """
-    Black-box function : minimise IoU
-    
+    Black-box function: minimize IoU
+
     Args:
         indices (list or np.ndarray): Indices of selected points in the dataset.
-        data (np.ndarray): The subset from which points are selected.
+        datasets (list): List of datasets.
         initial_points (np.ndarray): Initial set of points.
         attack_path (str): Path to save the attack data.
+        max_length (int): Maximum length of indices.
         args: Arguments for the validation function.
         cfg: Configuration for the validation function.
-    
+
     Returns:
         float: The score of the black-box function.
     """
@@ -48,28 +52,15 @@ def black_box_function(indices, datasets, initial_points, attack_path, max_lengt
         except Exception as e:
             print(f"Failed to write to {attack_path_bin}: {e}")
 
-    scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
+    scores, _ = validation.detection_confidence_custom_dataset(args, cfg, attack_paths)
     logging.critical(f"Mean score: {np.mean(scores)}")
     print(f"Mean score: {np.mean(scores)}")
     return np.mean(scores)
-    # selected_points = data[indices]
-    # points = utils.shift_selected_points(initial_points, selected_points, 2)
-
-    # attack_path_bin = attack_path[:-3] + "bin"
-    # print(f"Attack path: {attack_path}")
-    # try:
-    #     points.astype(np.float32).tofile(attack_path_bin)
-    # except Exception as e:
-    #     logging.error(f"Failed to write to {attack_path_bin}: {e}")
-
-    # scores, _ = validation.detection_iou_custom_dataset(args, cfg, [attack_path])
-    # print(f"Scores: {scores}")
-    # return scores[0]
 
 def black_box_function_save(individual, datasets, original_points, attack_paths, max_length, args, cfg):
     """
     Evaluate the fitness of an individual by applying the attack and calculating the detection IOU.
-    
+
     Args:
         individual (list): Individual to evaluate.
         datasets (list): List of datasets.
@@ -78,7 +69,7 @@ def black_box_function_save(individual, datasets, original_points, attack_paths,
         max_length (int): Maximum length of the individual.
         args: Command line arguments.
         cfg: Configuration settings.
-    
+
     Returns:
         tuple: Mean IOU score.
     """
@@ -93,21 +84,20 @@ def black_box_function_save(individual, datasets, original_points, attack_paths,
         except Exception as e:
             print(f"Failed to write to {attack_path_bin}: {e}")
 
-
-    scores, _ = validation.detection_iou_custom_dataset(args, cfg, attack_paths)
-    validation_utils.create_or_modify_excel_generic(scores, attack_paths, args.ckpt, type="bayesian", file_path="bayesian_results.xlsx")
+    scores, _ = validation.detection_confidence_custom_dataset(args, cfg, attack_paths)
+    validation_utils.create_or_modify_excel_generic(scores, attack_paths, args.ckpt, type="bayesian", file_path="bayesian_results_confidence.xlsx")
     logging.critical(f"Mean score: {np.mean(scores)}")
     print(f"Mean score: {np.mean(scores)}")
     return np.mean(scores)
 
 def load_attack_points_from_path(args, cfg):
     """
-    Load attack points from specified paths
-    
+    Load attack points from specified paths.
+
     Args:
         args: Arguments containing data path and other configurations.
         cfg: Configuration for validation functions.
-    
+
     Returns:
         tuple: A tuple containing datasets, original points, and attack paths.
     """
@@ -135,13 +125,12 @@ def load_attack_points_from_path(args, cfg):
 
                 points, points_in_bbox, _ = utils.get_point_mask_in_boxes3d(initial_points, bbox)
                 non_zero_indices = points_in_bbox.squeeze().nonzero().squeeze()
-                
+
                 if non_zero_indices.numel() == 0:
                     non_zero_indices = torch.tensor([])
-                
+
                 if non_zero_indices.numel() == 1:
                     non_zero_indices = torch.tensor([non_zero_indices.item()])
-
 
                 base_file_npy = os.path.basename(file_npy)
                 attack_path = os.path.join(condition_path_attack, base_file_npy)
@@ -154,15 +143,16 @@ def load_attack_points_from_path(args, cfg):
 
 def bayesian_optimisation_combined(args, cfg, datasets, initial_points, attack_path, max_length):
     """
-    Perform Bayesian Optimization
-    
+    Perform Bayesian Optimization.
+
     Args:
         args: Arguments containing configurations and budget.
         cfg: Configuration for validation functions.
-        data (np.ndarray): The subset from which points are selected.
-        initial_points (np.ndarray): Initial set of points.
+        datasets (list): List of datasets.
+        initial_points (list): Initial set of points.
         attack_path (str): Path to save the attack data.
-    
+        max_length (int): Maximum length of indices.
+
     Returns:
         tuple: The minimum value of the black-box function and the best subset of row indices.
     """
@@ -171,7 +161,7 @@ def bayesian_optimisation_combined(args, cfg, datasets, initial_points, attack_p
 
     budget = min(args.budget, max_length)
     k = budget  # Number of indices to select (assuming budget represents this)
-    
+
     # Create a named search space
     search_space = [Integer(0, max_length, name=f'index_{i}') for i in range(k)]
 
@@ -209,10 +199,6 @@ if __name__ == '__main__':
     args, cfg = validation.parse_config()
     dataset, initial_points, attack_paths = load_attack_points_from_path(args, cfg)
 
-    # # Perform Bayesian optimization in parallel
-    # # 2 parallel procceses is what my machine can handle
-    # parallel_results = Parallel(n_jobs=1)(delayed(bayesian_optimisation_case)(args, cfg, data, initial_point, attack_path) 
-    #                              for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths))
     kf = KFold(n_splits=5)
     fold_count = 0
     max_length = max(len(dataset) for dataset in dataset)
@@ -237,13 +223,7 @@ if __name__ == '__main__':
         print(f"Fold done with validation result {validation_result}")
         validation_results.append(validation_result)
 
-
-
-
-    # parallel_results = [bayesian_optimisation_combined(args, cfg, data, initial_point, attack_path) for (data, initial_point, attack_path) in zip(dataset, initial_points, attack_paths)]
-    # results, best_indices = zip(*parallel_results)
-    # best_indices_list = list(best_indices)
     logging.critical(f"Mean: {np.mean(results)}")
-
     print(results)
     print(np.mean(results))
+

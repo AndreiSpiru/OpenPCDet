@@ -3,6 +3,8 @@ import open3d as o3d
 import numpy as np
 import torch
 
+# Bounding box utilities
+
 def roi_filter(points, roi_min=(0, -35, -35), roi_max=(35, 35, 35)):
     """
     Filter points within the specified region of interest (ROI).

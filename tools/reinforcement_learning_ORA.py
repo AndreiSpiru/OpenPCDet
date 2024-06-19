@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Categorical
 
+# Failes attempt at a reinforcement learning ORA
+
 # Define a simple policy network
 class PolicyNetwork(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):

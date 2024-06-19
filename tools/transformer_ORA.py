@@ -5,6 +5,8 @@ from transformers import BertModel, BertConfig
 from torch.nn.utils.rnn import pad_sequence
 import numpy as np
 
+# Failes attempt at a transformer based ORA
+
 class LiDARDataset(Dataset):
     def __init__(self, num_samples=100, max_points=50):
         self.data = []
